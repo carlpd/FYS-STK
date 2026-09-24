@@ -34,37 +34,59 @@ y_n_te=y_te-y_te.mean()
 ys=[]
 n_tr=len(x_tr)
 n_te=len(x_te)
-MSEs_tr=np.zeros(max_degrees)
-R2s_tr=np.zeros(max_degrees)
-MSEs_te=np.zeros(max_degrees)
-R2s_te=np.zeros(max_degrees)
-
+MSEss=[]
+R2ss=[]
+lams=np.array((0.0, 0.001, 0.01, 0.1, 0.9))
 degrees=np.linspace(1,max_degrees, max_degrees)
-print(degrees)
-for degree in range(1, max_degrees+1):
-    X_tr=np.zeros((n_tr, degree))
-    for k in range(0, degree):
-        for i in range(0, n_tr):
-            X_tr[i,k]=x_tr[i]**(k+1)
-    X_n_tr = (X_tr - X_tr.mean(axis=0)) / X_tr.std(axis=0)
-    X_te=np.zeros((n_te, degree))
-    for k in range(0, degree):
-        for i in range(0, n_te):
-            X_te[i,k]=x_te[i]**(k+1)
-    X_n_te = (X_te - X_te.mean(axis=0)) / X_te.std(axis=0)
-    th=closed_form(X_n_tr, y_n_tr)
-    sol=(th @ X_n_te.T)
-    ys.append(sol)
-    
-    MSEs_te[degree-1]=(MSE(y_n_te, sol))
-    R2s_te[degree-1]=(R2(y_n_te, sol))
-    sol_tr=(th @ X_n_tr.T)
-    MSEs_tr[degree-1]=(MSE(y_n_tr, sol_tr))
-    R2s_tr[degree-1]=(R2(y_n_tr, sol_tr))
+for lam in lams:
+    MSEs_tr=np.zeros(max_degrees)
+    R2s_tr=np.zeros(max_degrees)
+    MSEs_te=np.zeros(max_degrees)
+    R2s_te=np.zeros(max_degrees)
+    for degree in range(1, max_degrees+1):
+        X_tr=np.zeros((n_tr, degree))
+        for k in range(0, degree):
+            for i in range(0, n_tr):
+                X_tr[i,k]=x_tr[i]**(k+1)
+        X_n_tr = (X_tr - X_tr.mean(axis=0)) / X_tr.std(axis=0)
+        X_te=np.zeros((n_te, degree))
+        for k in range(0, degree):
+            for i in range(0, n_te):
+                X_te[i,k]=x_te[i]**(k+1)
+        X_n_te = (X_te - X_te.mean(axis=0)) / X_te.std(axis=0)
+        th=closed_form(X_n_tr, y_n_tr, lam=lam)
+        sol=(th @ X_n_te.T)
+        ys.append(sol)
+        
+        MSEs_te[degree-1]=(MSE(y_n_te, sol))
+        R2s_te[degree-1]=(R2(y_n_te, sol))
+        sol_tr=(th @ X_n_tr.T)
+        MSEs_tr[degree-1]=(MSE(y_n_tr, sol_tr))
+        R2s_tr[degree-1]=(R2(y_n_tr, sol_tr))
+    MSEss.append(MSEs_te)
+    R2ss.append(R2s_te)
 
     
     #print(sol)
+print(MSEss[1])
+for i in range(0, len(lams)):
+    plt.title("MSE")
+    plt.xlabel("Polynomial degree")
+    plt.ylabel("Mean Squared Error")
+    plt.plot(degrees, MSEss[i], label=f"lam={lams[i]}")
 
+plt.legend()
+plt.show()
+for i in range(0, len(lams)):
+    plt.title(r"$R^2$ score")
+    plt.xlabel("Polynomial degree")
+    plt.ylabel(r"$R^2$ score")
+    plt.plot(degrees, R2ss[i], label=f"lam={lams[i]}")
+
+plt.legend()
+plt.show()
+
+"""
 plt.plot(degrees, MSEs_tr, label="OLS training")
 plt.plot(degrees, MSEs_te, label="OLS test")
 plt.xlabel("Polynomial degree")
@@ -77,3 +99,4 @@ plt.xlabel("Polynomial degree")
 plt.ylabel("R^2 score")
 plt.legend()
 plt.show()
+"""
