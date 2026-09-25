@@ -1,7 +1,7 @@
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
-
+#Copyed from Project1a.py and increased the number of polynomials and n
 def runge_data(n=100, noise=0.1, xmin=(-1), xmax=1, seed=2026):
     """Runge function 1/(1+25x^2) on [-1,1], standardised polynomial features, centred y."""
     rng = np.random.default_rng(seed)
@@ -18,14 +18,9 @@ def closed_form(X, y, lam=0.0):
 def MSE(y_data, y_model):
     return np.mean((y_data - y_model) ** 2)
 
-
-def R2(y_data, y_model):
-    return 1.0 - np.sum((y_data - y_model) ** 2) / np.sum((y_data - np.mean(y_data)) ** 2)
-
-
-n=100
+n=150
 sigma=0.1
-max_degrees=15
+max_degrees=17
 x, y=runge_data(n=n, noise=sigma, xmin=-1, xmax=1)
 x_tr, x_te, y_tr, y_te = train_test_split(x, y,test_size=0.3,random_state=2026)
 y_n_tr=y_tr-y_tr.mean()
@@ -34,9 +29,8 @@ ys=[]
 n_tr=len(x_tr)
 n_te=len(x_te)
 MSEs_tr=np.zeros(max_degrees)
-R2s_tr=np.zeros(max_degrees)
 MSEs_te=np.zeros(max_degrees)
-R2s_te=np.zeros(max_degrees)
+
 
 degrees=np.linspace(1,max_degrees, max_degrees)
 print(degrees)
@@ -56,23 +50,22 @@ for degree in range(1, max_degrees+1):
     ys.append(sol)
     
     MSEs_te[degree-1]=(MSE(y_n_te, sol))
-    R2s_te[degree-1]=(R2(y_n_te, sol))
     sol_tr=(th @ X_n_tr.T)
     MSEs_tr[degree-1]=(MSE(y_n_tr, sol_tr))
-    R2s_tr[degree-1]=(R2(y_n_tr, sol_tr))
 
-    
-    #print(sol)
+fig = plt.figure()
+ax = fig.add_subplot(1, 1, 1)
 
-plt.plot(degrees, MSEs_tr, label="OLS training")
-plt.plot(degrees, MSEs_te, label="OLS test")
-plt.xlabel("Polynomial degree")
-plt.ylabel("Mean Squared Error")
-plt.legend()
+#line, = ax.plot(a, color='blue', lw=2)
+
+ax.semilogy(degrees, MSEs_te, label="OLS test")
+ax.semilogy(degrees, MSEs_tr, label="OLS training")
+#ax.semilogy(degrees, MSEs_te, label="OLS test")
+#ax.plot(degrees, MSEs_tr, label="OLS training")
+#ax.plot(degrees, MSEs_te, label="OLS test")
+#ax.set_yscale('log')
+ax.set_xlabel("Polynomial degree")
+ax.set_ylabel("Mean Squared Error")
+ax.legend()
 plt.show()
-plt.plot(degrees, R2s_tr, label="OLS training")
-plt.plot(degrees, R2s_te, label="OLS test")
-plt.xlabel("Polynomial degree")
-plt.ylabel(r"$R^2$ score")
-plt.legend()
-plt.show()
+
