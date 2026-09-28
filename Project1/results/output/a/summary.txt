@@ -1,0 +1,5 @@
+Part a) OLS for the Runge function
+Parameters: n = 100, sigma = 0.1, max degree = 15, test_size = 0.3, seed = 2026, x ~ U[-1, 1]
+Scaling: X standardised and y centred with training statistics; solver: pinv
+Best test MSE: 1.4526e-02 at degree 14
+Scaling invariance check (degree 10): max |pred_scaled - pred_unscaled| = 9.54e-14
