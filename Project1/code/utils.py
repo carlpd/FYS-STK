@@ -97,6 +97,49 @@ def ridge_fit(X, y, lam):
     n, p = X.shape
     return np.linalg.solve(X.T @ X + n * lam * np.eye(p), X.T @ y)
 
+# ----------------------------------------------------------------------------
+# Resampling: bootstrap and bias-variance decomposition
+# ----------------------------------------------------------------------------
+def bootstrap_predictions(x_tr, y_tr, x_te, degree, n_boot, rng, fit=ols_fit):
+    """Predictions on a FIXED test set from models fitted on bootstrap resamples.
+ 
+    For each of the n_boot rounds the training set is resampled with replacement,
+    the Scaler is fitted on the resample (no information from the original training
+    set as a whole or from the test set), and the model is fitted and evaluated on x_te.
+ 
+    fit: function fit(X, y) -> theta, e.g. ols_fit or lambda X, y: ridge_fit(X, y, lam).
+    Returns an array of shape (len(x_te), n_boot).
+    """
+    n_tr = len(x_tr)
+    X_te = design_matrix(x_te, degree)
+    preds = np.empty((len(x_te), n_boot))
+    for b in range(n_boot):
+        idx = rng.integers(0, n_tr, n_tr)                  # draw with replacement
+        X_b, y_b = design_matrix(x_tr[idx], degree), y_tr[idx]
+        sc = Scaler().fit(X_b, y_b)                        # scaling learnt from the resample
+        theta = fit(sc.transform_X(X_b), y_b - sc.y_mean)
+        preds[:, b] = sc.transform_X(X_te) @ theta + sc.y_mean
+    return preds
+ 
+ 
+def bias_variance(y_ref, preds):
+    """Sample bias-variance decomposition over bootstrap predictions.
+ 
+    y_ref: reference values at the test points (the noisy y_test, or the true f(x_test)).
+    preds: array (n_test, n_boot) from bootstrap_predictions.
+ 
+    error = mean_i mean_b (y_i - yhat_ib)^2
+    bias2 = mean_i (y_i - mean_b yhat_ib)^2
+    var   = mean_i var_b (yhat_ib)
+    With these definitions error = bias2 + var holds exactly.
+    """
+    mean_pred = preds.mean(axis=1)
+    error = np.mean((y_ref[:, None] - preds) ** 2)
+    bias2 = np.mean((y_ref - mean_pred) ** 2)
+    var = np.mean(preds.var(axis=1))
+    return error, bias2, var
+
+
 
 # ----------------------------------------------------------------------------
 # Output

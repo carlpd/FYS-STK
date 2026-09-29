@@ -1,0 +1,15 @@
+Part c) Bias-variance tradeoff with the bootstrap (OLS)
+Parameters: sigma = 0.1, degrees 1-20, test_size = 0.3, seed = 2026, bootstrap rounds B = 300, n in (50, 100, 500, 1000)
+Scaling: refitted on every bootstrap resample; test set fixed
+
+n = 100: 30 test points, 3 outside the training range (x = [-0.974 -0.996 -0.974])
+  All test points:    minimum error 0.05285 at degree 4
+  Interior points:    minimum error 0.01884 at degree 8
+  Check error = bias2 + var: max relative deviation 5.6e-16
+  Bias2(y) - Bias2(f), interior points, degrees 1-8: 0.01093 to 0.02592 (realised noise mean((y-f)^2) = 0.009989, sigma^2 = 0.01)
+
+Dependence on n (optimal degree = minimum bootstrap test error):
+  n =    50: all points: degree  2 (error 0.06575); interior: degree  2 (error 0.0505, bias2 0.04361, var 0.006886)
+  n =   100: all points: degree  4 (error 0.05285); interior: degree  8 (error 0.01884, bias2 0.01387, var 0.00497)
+  n =   500: all points: degree 19 (error 0.01248); interior: degree 19 (error 0.01248, bias2 0.01191, var 0.0005738)
+  n =  1000: all points: degree 20 (error 0.01045); interior: degree 20 (error 0.01045, bias2 0.01012, var 0.0003367)
