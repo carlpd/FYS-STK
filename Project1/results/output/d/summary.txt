@@ -1,0 +1,25 @@
+Part d) k-fold cross-validation
+Data: n = 100, sigma = 0.1, seed = 2026 (same data set as part c)
+k = (5, 10), KFold(shuffle=True, random_state=2026); degrees 1-20; lambda in [1e-08, 1e+01] (log grid)
+Scaling inside the CV loop (Pipeline / own Scaler fitted on the training folds)
+Ridge: Scikit-Learn alpha = n_train * lambda
+
+OLS, optimal degree (minimum estimated test MSE):
+  CV k =  5: degree 12 (MSE 0.02016);  without the 2 extreme x: degree 10 (MSE 0.01755)
+  CV k = 10: degree 12 (MSE 0.01731);  without the 2 extreme x: degree 10 (MSE 0.01733)
+  Bootstrap, all test points:    degree  4 (MSE 0.05285)
+  Bootstrap, inside train range: degree  8 (MSE 0.01884)
+  Extreme x values: [-0.9964  0.9795]
+
+  Own k-fold vs Scikit-Learn (k = 5), relative difference in CV MSE: max 2.6e-13 for degree <= 12, max 7.5e+03 for all degrees
+  Own k-fold vs Scikit-Learn (k = 10), relative difference in CV MSE: max 6.4e-14 for degree <= 12, max 2.8e+02 for all degrees
+
+Ridge, k =  5: minimum CV MSE 0.01788 at degree 11, lambda = 1e-06
+Ridge, k = 10: minimum CV MSE 0.01762 at degree 12, lambda = 1e-08
+Own Ridge k-fold vs Scikit-Learn (alpha = n_train*lambda), 6 settings: max relative difference 5.2e-12
+
+Scaling inside vs outside the CV loop (Ridge, k = 5):
+  degree  5, lambda 1e-04: inside 0.041834, outside 0.041491, relative difference 8.2e-03
+  degree 10, lambda 1e-03: inside 0.028029, outside 0.028019, relative difference 3.4e-04
+  degree 15, lambda 1e-05: inside 0.020849, outside 0.019684, relative difference 5.6e-02
+  degree 15, lambda 1e-02: inside 0.033953, outside 0.034684, relative difference 2.2e-02
