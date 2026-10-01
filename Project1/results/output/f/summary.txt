@@ -1,0 +1,52 @@
+Part f) Momentum, AdaGrad, RMSprop and Adam for OLS and Ridge (utils.optimise)
+Data: n = 100, sigma = 0.1, seed = 2026, test_size = 0.3 (n_train = 70), degree 5
+Accuracy measure: relative parameter error w.r.t. the closed form, target 1e-06; budget 20,000 iterations; theta_0 = 0
+Adaptive parameters: momentum gamma = 0.9, RMSprop rho = 0.99, Adam beta1 = 0.9, beta2 = 0.999, eps = 1e-8
+
+OLS: h_max = 6.5011, h_min = 0.01256, kappa = 517.5, closed-form test MSE 0.048778
+   GD stability limit 2/h_max = 0.3076; momentum limit 2(1 + gamma)/h_max = 0.5845
+   1) Learning-rate scan (eta from 1e-4 to 1e1):
+      GD                    : reaches 1e-06 for eta in [5.6e-02, 1.8e-01] (3 of 21 scanned values)
+                              stays below for eta in [5.6e-02, 1.8e-01] (3 of 21 scanned values); fastest 5710 it. at eta = 1.8e-01
+      Momentum (gamma = 0.9): reaches 1e-06 for eta in [5.6e-03, 5.6e-01] (9 of 21 scanned values)
+                              stays below for eta in [5.6e-03, 5.6e-01] (8 of 21 scanned values); fastest 256 it. at eta = 5.6e-01
+      AdaGrad               : reaches 1e-06 for eta in [1.8e-02, 1.0e+01] (12 of 21 scanned values)
+                              stays below for eta in [1.8e-02, 1.0e+01] (12 of 21 scanned values); fastest 5725 it. at eta = 5.6e-02
+      RMSprop               : reaches 1e-06 for eta in none
+                              stays below for eta in none; lowest late error 1.2e-04 at eta = 1.0e-04
+      Adam                  : reaches 1e-06 for eta in [1.0e-04, 1.0e+01] (21 of 21 scanned values)
+                              stays below for eta in none; fastest 421 it. at eta = 3.2e-02 (does not stay below)
+   2) Convergence at the best learning rate (20,000 iterations):
+      GD, eta = 1/h_max (part e)                : first below 1e-06 after   6602 it., max error afterwards 1.0e-06, test MSE 0.048778
+      GD, eta = 1.8e-01                         : first below 1e-06 after   5710 it., max error afterwards 1.0e-06, test MSE 0.048778
+      Momentum (gamma = 0.9), eta = 5.6e-01     : first below 1e-06 after    256 it., max error afterwards 8.2e-07, test MSE 0.048778
+      AdaGrad, eta = 5.6e-02                    : first below 1e-06 after   5725 it., max error afterwards 1.0e-06, test MSE 0.048778
+      RMSprop, eta = 1.0e-04                    : first below 1e-06 after      - it., max error afterwards 1.2e-04, test MSE 0.048766
+      Adam, eta = 3.2e-02                       : first below 1e-06 after    421 it., max error afterwards 1.8e-02, test MSE 0.048778
+      Momentum, optimal eta^*, gamma^* = 0.839  : first below 1e-06 after    194 it., max error afterwards 1.0e-06, test MSE 0.048778
+      predicted rates: GD (eta = 1/h_max) 1 - 1/kappa = 0.99807 -> 7143 iterations; optimal heavy ball (sqrt(kappa)-1)/(sqrt(kappa)+1) = 0.9158 -> 157 iterations (asymptotic, up to a constant)
+
+Ridge, lambda = 1e-03: h_max = 6.5031, h_min = 0.01456, kappa = 446.6, closed-form test MSE 0.046214
+   GD stability limit 2/h_max = 0.3075; momentum limit 2(1 + gamma)/h_max = 0.5843
+   1) Learning-rate scan (eta from 1e-4 to 1e1):
+      GD                    : reaches 1e-06 for eta in [5.6e-02, 1.8e-01] (3 of 21 scanned values)
+                              stays below for eta in [5.6e-02, 1.8e-01] (3 of 21 scanned values); fastest 4883 it. at eta = 1.8e-01
+      Momentum (gamma = 0.9): reaches 1e-06 for eta in [5.6e-03, 5.6e-01] (9 of 21 scanned values)
+                              stays below for eta in [5.6e-03, 1.8e-01] (7 of 21 scanned values); fastest 308 it. at eta = 1.8e-01
+      AdaGrad               : reaches 1e-06 for eta in [1.8e-02, 1.0e+01] (12 of 21 scanned values)
+                              stays below for eta in [1.8e-02, 1.0e+01] (12 of 21 scanned values); fastest 4901 it. at eta = 5.6e-02
+      RMSprop               : reaches 1e-06 for eta in none
+                              stays below for eta in none; lowest late error 1.2e-04 at eta = 1.0e-04
+      Adam                  : reaches 1e-06 for eta in [1.0e-04, 1.0e+01] (21 of 21 scanned values)
+                              stays below for eta in none; fastest 354 it. at eta = 3.2e-02 (does not stay below)
+   2) Convergence at the best learning rate (20,000 iterations):
+      GD, eta = 1/h_max (part e)                : first below 1e-06 after   5648 it., max error afterwards 1.0e-06, test MSE 0.046214
+      GD, eta = 1.8e-01                         : first below 1e-06 after   4883 it., max error afterwards 1.0e-06, test MSE 0.046214
+      Momentum (gamma = 0.9), eta = 1.8e-01     : first below 1e-06 after    308 it., max error afterwards 9.7e-07, test MSE 0.046214
+      AdaGrad, eta = 5.6e-02                    : first below 1e-06 after   4901 it., max error afterwards 1.0e-06, test MSE 0.046214
+      RMSprop, eta = 1.0e-04                    : first below 1e-06 after      - it., max error afterwards 1.2e-04, test MSE 0.046203
+      Adam, eta = 3.2e-02                       : first below 1e-06 after    354 it., max error afterwards 2.0e-02, test MSE 0.046214
+      Momentum, optimal eta^*, gamma^* = 0.827  : first below 1e-06 after    180 it., max error afterwards 9.7e-07, test MSE 0.046214
+      predicted rates: GD (eta = 1/h_max) 1 - 1/kappa = 0.99776 -> 6163 iterations; optimal heavy ball (sqrt(kappa)-1)/(sqrt(kappa)+1) = 0.9096 -> 146 iterations (asymptotic, up to a constant)
+
+(run index in convergence_*.csv follows the order in section 2)

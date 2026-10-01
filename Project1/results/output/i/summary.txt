@@ -1,0 +1,27 @@
+Part i) Final model selection: OLS, Ridge and Lasso with cross-validation
+Data: n = 100, sigma = 0.1 (sigma^2 = 0.010), seed = 2026, test_size = 0.3 (n_train = 70, n_test = 30)
+CV: 5-fold repeated 3 times on the training set (15 folds), Scaler fitted inside each fold
+Degrees 1-15, lambda 1e-07-1e+00 (15 values); Lasso alpha = lambda/2
+
+Lasso cells excluded (not converged in 100,000 CD iterations, tol 1e-08): 64 of 225 (degree 8: lambda <= 3e-04; degree 9: lambda <= 3e-04; degree 10: lambda <= 1e-04; degree 11: lambda <= 3e-04; degree 12: lambda <= 1e-03; degree 13: lambda <= 1e-03; degree 14: lambda <= 1e-03; degree 15: lambda <= 1e-03)
+
+1-2) Selected models (CV on training set; test set used only here):
+   OLS   lowest CV: degree 6                   CV MSE 0.03458 +- 0.00310, test MSE 0.01874, R2 0.823, nonzero coefficients 6/6
+   OLS   one-SE   : degree 6                   CV MSE 0.03458 +- 0.00310, test MSE 0.01874, R2 0.823, nonzero coefficients 6/6
+   Ridge lowest CV: degree 8, lambda 1.0e-04   CV MSE 0.02867 +- 0.00271, test MSE 0.01578, R2 0.851, nonzero coefficients 8/8
+   Ridge one-SE   : degree 8, lambda 1.0e-04   CV MSE 0.02867 +- 0.00271, test MSE 0.01578, R2 0.851, nonzero coefficients 8/8
+   Lasso lowest CV: degree 10, lambda 1.0e-03  CV MSE 0.02966 +- 0.00292, test MSE 0.01786, R2 0.831, nonzero coefficients 7/10
+   Lasso one-SE   : degree 6, lambda 1.0e-03   CV MSE 0.03089 +- 0.00263, test MSE 0.01896, R2 0.821, nonzero coefficients 5/6
+   Lowest CV MSE overall: Ridge, degree 8, lambda 1.0e-04; methods within one SE of it: Ridge, Lasso
+   (method index in selected_models.csv: 0 OLS, 1 Ridge, 2 Lasso; rule 0 = lowest CV, 1 = one-SE)
+   Check with a single 5-fold split: OLS degree 6 (CV 0.03428); Ridge degree 6, lambda 3.2e-04 (CV 0.03143); Lasso degree 10, lambda 3.2e-04 (CV 0.03026)
+   Check with a single 10-fold split: OLS degree 6 (CV 0.03311); Ridge degree 11, lambda 1.0e-06 (CV 0.02241); Lasso degree 10, lambda 1.0e-03 (CV 0.02853)
+
+3a) Bias-variance vs lambda, degree 12, 200 bootstrap samples, reference f(x_test):
+   OLS: bias^2 50.47101, variance 3116.55682
+   Ridge: bias^2 0.01933 -> 0.04773, variance 90.12822 -> 0.00204 from lambda 1e-07 to 1e+00; lowest MSE w.r.t. f 0.04182 at lambda 3.2e-01 (bias^2 0.03754, variance 0.00428)
+   Lasso: bias^2 0.00471 -> 0.08070, variance 0.76351 -> 0.00139 from lambda 3e-04 to 1e+00; lowest MSE w.r.t. f 0.02337 at lambda 1.0e-02 (bias^2 0.01894, variance 0.00443)
+3b) Bias-variance vs degree (Ridge and Lasso at their CV-optimal lambda per degree):
+   OLS  : variance at degree 5 / 10 / 15: 0.16747 / 40.36750 / 579438.01125; bias^2: 0.08455 / 0.06233 / 17719.39542
+   Ridge: variance at degree 5 / 10 / 15: 0.00456 / 7.99147 / 0.12502; bias^2: 0.02040 / 0.01897 / 0.02134
+   Lasso: variance at degree 5 / 10 / 15: 0.00271 / 0.07261 / 0.03362; bias^2: 0.01900 / 0.00564 / 0.00850

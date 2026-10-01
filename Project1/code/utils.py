@@ -7,7 +7,13 @@ Data:        runge, runge_data, design_matrix
 Scaling:     Scaler (standardise X, centre y, training statistics only)
 Metrics:     MSE, R2
 Regression:  ols_fit (pseudoinverse), ridge_fit (closed form)
-Output:      media_path  -> results/media/<part>/   (figures)
+Resampling:  bootstrap_predictions, bias_variance
+Gradients:   ridge_cost, ridge_grad (analytical), ridge_hessian, autodiff_backend (JAX/Autograd)
+Optimisers:  make_update (update rules: GD, momentum, AdaGrad, RMSprop, Adam),
+             optimise (full batch; optional proximal step for ISTA),
+             sgd (mini-batches, epochs, learning-rate schedule),
+             gradient_descent (plain GD, fixed learning rate; wrapper used in part e)
+Output:     media_path  -> results/media/<part>/   (figures)
              output_path -> results/output/<part>/  (tables, summaries, parameters)
              save_table, save_text
 
@@ -97,16 +103,17 @@ def ridge_fit(X, y, lam):
     n, p = X.shape
     return np.linalg.solve(X.T @ X + n * lam * np.eye(p), X.T @ y)
 
+
 # ----------------------------------------------------------------------------
 # Resampling: bootstrap and bias-variance decomposition
 # ----------------------------------------------------------------------------
 def bootstrap_predictions(x_tr, y_tr, x_te, degree, n_boot, rng, fit=ols_fit):
     """Predictions on a FIXED test set from models fitted on bootstrap resamples.
- 
+
     For each of the n_boot rounds the training set is resampled with replacement,
     the Scaler is fitted on the resample (no information from the original training
     set as a whole or from the test set), and the model is fitted and evaluated on x_te.
- 
+
     fit: function fit(X, y) -> theta, e.g. ols_fit or lambda X, y: ridge_fit(X, y, lam).
     Returns an array of shape (len(x_te), n_boot).
     """
@@ -120,14 +127,14 @@ def bootstrap_predictions(x_tr, y_tr, x_te, degree, n_boot, rng, fit=ols_fit):
         theta = fit(sc.transform_X(X_b), y_b - sc.y_mean)
         preds[:, b] = sc.transform_X(X_te) @ theta + sc.y_mean
     return preds
- 
- 
+
+
 def bias_variance(y_ref, preds):
     """Sample bias-variance decomposition over bootstrap predictions.
- 
+
     y_ref: reference values at the test points (the noisy y_test, or the true f(x_test)).
     preds: array (n_test, n_boot) from bootstrap_predictions.
- 
+
     error = mean_i mean_b (y_i - yhat_ib)^2
     bias2 = mean_i (y_i - mean_b yhat_ib)^2
     var   = mean_i var_b (yhat_ib)
@@ -139,6 +146,172 @@ def bias_variance(y_ref, preds):
     var = np.mean(preds.var(axis=1))
     return error, bias2, var
 
+
+# ----------------------------------------------------------------------------
+# Cost functions, gradients and Hessian (OLS = Ridge with lam = 0)
+# ----------------------------------------------------------------------------
+def ridge_cost(theta, X, y, lam=0.0):
+    """C(theta) = (1/n)||y - X theta||^2 + lam ||theta||^2."""
+    return np.mean((y - X @ theta) ** 2) + lam * np.sum(theta ** 2)
+
+
+def ridge_grad(theta, X, y, lam=0.0):
+    """Analytical gradient: (2/n) X^T (X theta - y) + 2 lam theta."""
+    n = X.shape[0]
+    return (2.0 / n) * X.T @ (X @ theta - y) + 2.0 * lam * theta
+
+
+def ridge_hessian(X, lam=0.0):
+    """Hessian (constant): (2/n) X^T X + 2 lam I."""
+    n, p = X.shape
+    return (2.0 / n) * X.T @ X + 2.0 * lam * np.eye(p)
+
+
+def autodiff_backend():
+    """Return (numpy-like module, grad transform, name) for automatic differentiation.
+
+    Prefers JAX (in double precision, with jit), falls back to Autograd.
+    The cost function to differentiate must be written with the returned numpy-like module.
+    """
+    try:
+        import jax
+        jax.config.update("jax_enable_x64", True)     # float64: needed for machine-precision checks
+        import jax.numpy as jnp
+        return jnp, (lambda f: jax.jit(jax.grad(f))), "JAX"
+    except ImportError:
+        pass
+    try:
+        import autograd.numpy as anp
+        from autograd import grad
+        return anp, grad, "Autograd"
+    except ImportError:
+        raise ImportError("Automatic differentiation needs JAX or Autograd: "
+                          "pip install jax   (or: pip install autograd)")
+
+
+# ----------------------------------------------------------------------------
+# Optimisers
+# ----------------------------------------------------------------------------
+OPTIMISERS = ("gd", "momentum", "adagrad", "rmsprop", "adam")
+
+
+def make_update(method, shape, gamma=0.9, rho=0.99, beta1=0.9, beta2=0.999, eps=1e-8):
+    """Update rule with its own state, shared by optimise (full batch) and sgd (mini-batches).
+
+    Returns update(theta, g, eta) -> new theta. Rules (t = number of updates so far, from 1):
+        "gd"        theta <- theta - eta g
+        "momentum"  v <- gamma v + eta g,                  theta <- theta - v
+        "adagrad"   G <- G + g^2,                          theta <- theta - eta g / (sqrt(G) + eps)
+        "rmsprop"   s <- rho s + (1 - rho) g^2,            theta <- theta - eta g / (sqrt(s) + eps)
+        "adam"      m <- beta1 m + (1 - beta1) g,  s <- beta2 s + (1 - beta2) g^2,
+                    theta <- theta - eta m_hat / (sqrt(s_hat) + eps), with bias-corrected m_hat, s_hat
+    """
+    if method not in OPTIMISERS:
+        raise ValueError(f"method must be one of {OPTIMISERS}")
+    state = {"v": np.zeros(shape), "s": np.zeros(shape), "t": 0}
+
+    def update(theta, g, eta):
+        state["t"] += 1
+        t = state["t"]
+        if method == "gd":
+            return theta - eta * g
+        if method == "momentum":
+            state["v"] = gamma * state["v"] + eta * g
+            return theta - state["v"]
+        if method == "adagrad":
+            state["s"] = state["s"] + g * g
+            return theta - eta * g / (np.sqrt(state["s"]) + eps)
+        if method == "rmsprop":
+            state["s"] = rho * state["s"] + (1 - rho) * g * g
+            return theta - eta * g / (np.sqrt(state["s"]) + eps)
+        state["v"] = beta1 * state["v"] + (1 - beta1) * g                       # adam
+        state["s"] = beta2 * state["s"] + (1 - beta2) * g * g
+        return theta - eta * (state["v"] / (1 - beta1 ** t)) / (np.sqrt(state["s"] / (1 - beta2 ** t)) + eps)
+
+    return update
+
+
+def optimise(grad, theta0, eta, max_iter, method="gd", theta_ref=None, tol=None, blowup=1e10,
+             monitor=None, prox=None, **params):
+    """Full-batch gradient descent with a fixed or adaptive learning rate (parts e, f, g).
+
+    method:    one of OPTIMISERS; update rules in make_update. params: gamma, rho, beta1, beta2, eps.
+    grad:      function theta -> gradient (or subgradient, e.g. for Lasso)
+    theta_ref: optional reference solution. If given, the relative error
+               ||theta_k - theta_ref|| / ||theta_ref|| is recorded every iteration, and the
+               iteration stops when it drops below tol (if tol is given) or diverges.
+    monitor:   optional function of theta recorded every iteration instead of the relative
+               error (e.g. the cost). Stopping on tol/divergence still uses theta_ref.
+    prox:      optional proximal step (z, eta) -> theta applied after each "gd" step. With
+               the gradient of the smooth part and soft thresholding this is ISTA (part g).
+    Returns (theta, history, n_iter): history has length n_iter + 1 (entry 0 = starting point)
+    and is empty if neither theta_ref nor monitor is given.
+    """
+    if prox is not None and method != "gd":
+        raise ValueError("prox is only defined for plain gradient descent (ISTA)")
+    theta = np.array(theta0, dtype=float)
+    update = make_update(method, theta.shape, **params)
+    ref_norm = None if theta_ref is None else np.linalg.norm(theta_ref)
+    history = []
+    k = 0
+    for k in range(max_iter + 1):
+        if theta_ref is not None:
+            err = np.linalg.norm(theta - theta_ref) / ref_norm
+            history.append(err if monitor is None else monitor(theta))
+            if tol is not None and err < tol:
+                break
+            if not np.isfinite(err) or err > blowup:
+                break
+        elif monitor is not None:
+            history.append(monitor(theta))
+        if k == max_iter:
+            break
+        theta = update(theta, grad(theta), eta)
+        if prox is not None:
+            theta = prox(theta, eta)
+    return theta, np.array(history), k
+
+
+def sgd(grad_batch, theta0, n, eta, n_epochs, batch_size, method="gd", rng=None, schedule=None,
+        monitor=None, blowup=1e10, **params):
+    """Stochastic (mini-batch) gradient descent with the same update rules as optimise (part h).
+
+    grad_batch: function (theta, idx) -> gradient computed on the data points idx only,
+                e.g. lambda t, idx: ridge_grad(t, X[idx], y[idx], lam).
+    n:          number of training points. Every epoch the indices are shuffled and split into
+                ceil(n / batch_size) mini-batches; batch_size = n is full-batch GD.
+    schedule:   optional function t -> learning rate, t = number of updates so far (from 0);
+                default constant eta.
+    monitor:    optional function of theta recorded once per epoch (entry 0 = starting point).
+    Returns (theta, history, n_updates). Stops early if monitor returns a non-finite value
+    or one above blowup (divergence).
+    """
+    rng = np.random.default_rng() if rng is None else rng
+    theta = np.array(theta0, dtype=float)
+    update = make_update(method, theta.shape, **params)
+    lr = (lambda t: eta) if schedule is None else schedule
+    history = [] if monitor is None else [monitor(theta)]
+    t = 0
+    for _ in range(n_epochs):
+        perm = rng.permutation(n)
+        for start in range(0, n, batch_size):
+            idx = perm[start:start + batch_size]
+            theta = update(theta, grad_batch(theta, idx), lr(t))
+            t += 1
+        if monitor is not None:
+            history.append(monitor(theta))
+            value = np.max(history[-1])
+            if not np.isfinite(value) or value > blowup:
+                break
+    return theta, np.array(history), t
+
+
+def gradient_descent(grad, theta0, eta, max_iter, theta_ref=None, tol=None, blowup=1e10):
+    """Plain gradient descent with fixed learning rate (part e): optimise(..., method="gd").
+
+    Returns (theta, errors, n_iter) exactly as before; see optimise.
+    """
+    return optimise(grad, theta0, eta, max_iter, "gd", theta_ref, tol, blowup)
 
 
 # ----------------------------------------------------------------------------
@@ -168,7 +341,7 @@ def save_table(part, filename, columns):
     names = list(columns)
     data = np.column_stack([np.asarray(columns[k], dtype=float) for k in names])
     np.savetxt(output_path(part, filename), data, delimiter=",",
-               header=",".join(names), comments="", fmt="%.10e")
+               header=",".join(names), comments="", fmt="%.6g")
 
 
 def save_text(part, filename, lines):

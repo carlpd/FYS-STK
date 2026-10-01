@@ -1,0 +1,47 @@
+Part h) Stochastic gradient descent (utils.sgd, same update rules as parts e-g)
+Data: n = 100, sigma = 0.1, seed = 2026, test_size = 0.3 (n_train = 70), degree 5
+500 epochs, medians over 5 shuffling seeds; theta_0 = 0; accuracy = relative excess training cost (C - C*)/C* w.r.t. the closed form
+Schedule: eta_t = eta_0/(1 + t/T), T = updates in 20 epochs
+Largest single-point curvature 2||x_i||^2 = 84.0
+
+OLS: h_max = 6.5011, closed-form test MSE 0.048778
+   1) Mini-batch size (plain SGD, constant eta, best of 0.01, 0.03, 0.1, 0.3, 1 x 1/h_max):
+      B =  1: eta = 0.03/h_max, 70 updates/epoch, 0.627 ms/epoch; after 500 epochs: excess cost 2.6e-03, parameter error 5.0e-02, test MSE 0.04326
+      B =  5: eta = 0.1/h_max, 14 updates/epoch, 0.168 ms/epoch; after 500 epochs: excess cost 2.0e-03, parameter error 9.1e-02, test MSE 0.04403
+      B = 14: eta = 0.3/h_max,  5 updates/epoch, 0.092 ms/epoch; after 500 epochs: excess cost 2.8e-03, parameter error 8.2e-02, test MSE 0.04343
+      B = 35: eta = 0.3/h_max,  2 updates/epoch, 0.066 ms/epoch; after 500 epochs: excess cost 7.8e-03, parameter error 2.0e-01, test MSE 0.04193
+      B = 70: eta = 1/h_max,  1 updates/epoch, 0.057 ms/epoch; after 500 epochs: excess cost 3.1e-03, parameter error 1.3e-01, test MSE 0.04499
+   2) Learning-rate schedule, plain SGD, B = 5:
+      constant, eta_0 = 0.1/h_max   : excess cost after 50 / 500 epochs 1.9e-01 / 2.0e-03, parameter error 9.1e-02
+      constant, eta_0 = 0.3/h_max   : excess cost after 50 / 500 epochs 3.0e-02 / 1.7e-02, parameter error 3.0e-02
+      decaying, eta_0 = 0.3/h_max   : excess cost after 50 / 500 epochs 9.3e-02 / 9.3e-03, parameter error 2.1e-01
+      decaying, eta_0 = 1/h_max     : excess cost after 50 / 500 epochs 1.8e-02 / 6.6e-04, parameter error 5.9e-02
+      Full-batch GD, eta = 1/h_max  : excess cost after 50 / 500 epochs 3.0e-01 / 3.1e-03
+   3) Update rules with SGD (B = 5) vs full batch (B = 70), best eta for each; final excess cost / test MSE:
+      GD                    : SGD constant 2.0e-03 / 0.04403, SGD decaying 6.6e-04 / 0.04653, full batch 3.1e-03 / 0.04499
+      Momentum (gamma = 0.9): SGD constant 1.9e-03 / 0.04702, SGD decaying 7.2e-04 / 0.04956, full batch 3.8e-13 / 0.04878
+      AdaGrad               : SGD constant 1.2e-03 / 0.04580, SGD decaying 3.7e-02 / 0.03736, full batch 2.6e-03 / 0.04540
+      RMSprop               : SGD constant 2.6e-03 / 0.04328, SGD decaying 4.1e-04 / 0.04714, full batch 1.0e-03 / 0.04696
+      Adam                  : SGD constant 1.5e-03 / 0.04821, SGD decaying 4.3e-04 / 0.04818, full batch 2.1e-16 / 0.04878
+
+Ridge, lambda = 1e-03: h_max = 6.5031, closed-form test MSE 0.046214
+   1) Mini-batch size (plain SGD, constant eta, best of 0.01, 0.03, 0.1, 0.3, 1 x 1/h_max):
+      B =  1: eta = 0.03/h_max, 70 updates/epoch, 0.637 ms/epoch; after 500 epochs: excess cost 2.1e-03, parameter error 3.4e-02, test MSE 0.04192
+      B =  5: eta = 0.1/h_max, 14 updates/epoch, 0.170 ms/epoch; after 500 epochs: excess cost 1.3e-03, parameter error 6.6e-02, test MSE 0.04258
+      B = 14: eta = 0.3/h_max,  5 updates/epoch, 0.094 ms/epoch; after 500 epochs: excess cost 2.1e-03, parameter error 5.8e-02, test MSE 0.04201
+      B = 35: eta = 0.3/h_max,  2 updates/epoch, 0.066 ms/epoch; after 500 epochs: excess cost 5.6e-03, parameter error 1.6e-01, test MSE 0.04104
+      B = 70: eta = 1/h_max,  1 updates/epoch, 0.056 ms/epoch; after 500 epochs: excess cost 1.9e-03, parameter error 1.0e-01, test MSE 0.04359
+   2) Learning-rate schedule, plain SGD, B = 5:
+      constant, eta_0 = 0.1/h_max   : excess cost after 50 / 500 epochs 1.7e-01 / 1.3e-03, parameter error 6.6e-02
+      constant, eta_0 = 0.3/h_max   : excess cost after 50 / 500 epochs 2.5e-02 / 1.4e-02, parameter error 2.8e-02
+      decaying, eta_0 = 0.3/h_max   : excess cost after 50 / 500 epochs 8.2e-02 / 6.7e-03, parameter error 1.7e-01
+      decaying, eta_0 = 1/h_max     : excess cost after 50 / 500 epochs 1.6e-02 / 3.4e-04, parameter error 4.0e-02
+      Full-batch GD, eta = 1/h_max  : excess cost after 50 / 500 epochs 2.7e-01 / 1.9e-03
+   3) Update rules with SGD (B = 5) vs full batch (B = 70), best eta for each; final excess cost / test MSE:
+      GD                    : SGD constant 1.3e-03 / 0.04258, SGD decaying 3.4e-04 / 0.04475, full batch 1.9e-03 / 0.04359
+      Momentum (gamma = 0.9): SGD constant 1.2e-03 / 0.04523, SGD decaying 3.8e-04 / 0.04542, full batch 6.1e-16 / 0.04621
+      AdaGrad               : SGD constant 6.1e-04 / 0.04410, SGD decaying 3.1e-02 / 0.03712, full batch 1.6e-03 / 0.04391
+      RMSprop               : SGD constant 2.1e-03 / 0.04155, SGD decaying 1.9e-04 / 0.04506, full batch 7.3e-04 / 0.04505
+      Adam                  : SGD constant 1.2e-03 / 0.04605, SGD decaying 2.6e-04 / 0.04607, full batch 2.0e-16 / 0.04621
+
+(method index in methods_*.csv: 0 GD, 1 momentum, 2 AdaGrad, 3 RMSprop, 4 Adam)
