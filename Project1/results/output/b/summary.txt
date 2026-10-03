@@ -5,4 +5,4 @@ Scaling: X standardised and y centred with training statistics
 Best Ridge test MSE: 1.3374e-02 at degree 12, lambda = 1e-05
 Best OLS test MSE: 1.4526e-02 at degree 14
 OLS test MSE at degree 15: 4.2937e-01
-Scikit-Learn check (lambda = 1e-3): max |theta_own - theta_sklearn| = 1.15e-13
+Scikit-Learn check (lambda = 1e-3): max |theta_own - theta_sklearn| = 1.32e-13

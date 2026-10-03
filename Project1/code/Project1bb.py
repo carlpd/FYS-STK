@@ -83,12 +83,12 @@ if __name__ == "__main__":
     # 2) Test and train MSE vs degree for selected lambdas, with OLS
     sel = [1e-6, 1e-4, 1e-2, 1e0]
     fig, ax = plt.subplots(1, 2, figsize=(12, 4.5), sharey=True)
-    ax[0].plot(degrees, ols["mse_tr"][0], "k--o", ms=3, label="OLS")
-    ax[1].plot(degrees, ols["mse_te"][0], "k--o", ms=3, label="OLS")
     for lam in sel:
         i = np.argmin(np.abs(lams - lam))
         ax[0].plot(degrees, res["mse_tr"][i], "o-", ms=3, label=rf"$\lambda$={lams[i]:.0e}")
         ax[1].plot(degrees, res["mse_te"][i], "o-", ms=3, label=rf"$\lambda$={lams[i]:.0e}")
+    ax[0].plot(degrees, ols["mse_tr"][0], "k--o", ms=3, label="OLS")
+    ax[1].plot(degrees, ols["mse_te"][0], "k--o", ms=3, label="OLS")
     for a, t in zip(ax, ("Training", "Test")):
         a.axhline(sigma**2, ls=":", c="gray", label=r"$\sigma^2$")
         a.set(xlabel="Polynomial degree", yscale="log", title=f"{t} MSE")
@@ -173,6 +173,7 @@ if __name__ == "__main__":
     sk_diff = np.max(np.abs(th_own - th_sk))
     print(f"\nmax |theta_own - theta_sklearn| (alpha = n*lambda): {sk_diff:.2e}")
 
+    print("OLS", ols["mse_te"][0])
     # 9) Save tables and summary to results/output/b/
     grid_cols = lambda key: {"log10_lambda": np.log10(lams),
                              **{f"deg_{p}": res[key][:, k] for k, p in enumerate(degrees)}}
