@@ -270,6 +270,8 @@ def optimise(grad, theta0, eta, max_iter, method="gd", theta_ref=None, tol=None,
                the gradient of the smooth part and soft thresholding this is ISTA (part g).
     Returns (theta, history, n_iter): history has length n_iter + 1 (entry 0 = starting point)
     and is empty if neither theta_ref nor monitor is given.
+
+    LLM was used to generate code.
     """
     if prox is not None and method != "gd":
         raise ValueError("prox is only defined for plain gradient descent (ISTA)")
@@ -309,6 +311,8 @@ def sgd(grad_batch, theta0, n, eta, n_epochs, batch_size, method="gd", rng=None,
     monitor:    optional function of theta recorded once per epoch (entry 0 = starting point).
     Returns (theta, history, n_updates). Stops early if monitor returns a non-finite value
     or one above blowup (divergence).
+
+    LLM was used to generate code.
     """
     rng = np.random.default_rng() if rng is None else rng
     theta = np.array(theta0, dtype=float)
@@ -334,6 +338,8 @@ def gradient_descent(grad, theta0, eta, max_iter, theta_ref=None, tol=None, blow
     """Plain gradient descent with fixed learning rate (part e): optimise(..., method="gd").
 
     Returns (theta, errors, n_iter) exactly as before; see optimise.
+
+    LLM was used to generate code.
     """
     return optimise(grad, theta0, eta, max_iter, "gd", theta_ref, tol, blowup)
 
@@ -348,12 +354,16 @@ def _results_path(kind, part, filename):
 
 
 def media_path(part, filename):
-    """Path results/media/<part>/<filename> for figures (folder created if needed)."""
+    """Path results/media/<part>/<filename> for figures (folder created if needed).
+    
+    LLM was used to generate code."""
     return _results_path("media", part, filename)
 
 
 def output_path(part, filename):
-    """Path results/output/<part>/<filename> for tables and text (folder created if needed)."""
+    """Path results/output/<part>/<filename> for tables and text (folder created if needed).
+    
+    LLM was used to generate code."""
     return _results_path("output", part, filename)
 
 
@@ -361,6 +371,8 @@ def save_table(part, filename, columns):
     """Save a CSV file in results/output/<part>/.
 
     columns: dict {column name: 1D array}, all of equal length.
+
+    LLM was used to generate code.
     """
     names = list(columns)
     data = np.column_stack([np.asarray(columns[k], dtype=float) for k in names])
@@ -369,5 +381,7 @@ def save_table(part, filename, columns):
 
 
 def save_text(part, filename, lines):
-    """Save a list of lines as a text file in results/output/<part>/."""
+    """Save a list of lines as a text file in results/output/<part>/.
+    
+    LLM was used to generate code."""
     output_path(part, filename).write_text("\n".join(lines) + "\n")
