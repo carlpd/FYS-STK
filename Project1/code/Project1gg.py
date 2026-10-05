@@ -51,6 +51,7 @@ ZERO_FACTOR = 2.0                   # subgradient GD: |theta_j| < ZERO_FACTOR * 
 # Lasso cost, analytical subgradient and the proximal step of the l1 penalty
 # ----------------------------------------------------------------------------
 def lasso_cost(theta, X, y, lam):
+    """Lasso cost function."""
     return np.mean((y - X @ theta) ** 2) + lam * np.sum(np.abs(theta))
 
 
@@ -86,7 +87,9 @@ def lasso_grad_ad(theta, X, y, lam):
 # Helpers
 # ----------------------------------------------------------------------------
 def fit_gd(X, y, lam, kind, n_iter, theta0=None):
-    """Plain GD from part e) with eta = 1/h_max for OLS, Ridge and Lasso (subgradient)."""
+    """Plain GD from part e) with eta = 1/h_max for OLS, Ridge and Lasso (subgradient).
+    
+    LLM was used to generate code."""
     lam_smooth = lam if kind == "ridge" else 0.0
     eta = 1.0 / np.linalg.eigvalsh(ridge_hessian(X, lam_smooth)).max()
     if kind == "lasso":

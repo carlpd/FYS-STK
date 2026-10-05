@@ -79,7 +79,9 @@ def grad_fd(theta, X, y, lam, h=1e-6):
 # Helpers
 # ----------------------------------------------------------------------------
 def prepare(x_tr, x_te, y_tr, degree):
-    """Standardised design matrices (training statistics) and centred training targets."""
+    """Standardised design matrices (training statistics) and centred training targets.
+    
+    LLM was used to generate code."""
     sc = Scaler().fit(design_matrix(x_tr, degree), y_tr)
     return (sc.transform_X(design_matrix(x_tr, degree)),
             sc.transform_X(design_matrix(x_te, degree)), y_tr - sc.y_mean, sc.y_mean)
@@ -103,7 +105,9 @@ def int_ticks(fig):
 
 
 def check_gradients(x_tr, x_te, y_tr, rng, summary):
-    """Section 1: analytical vs AD vs finite differences."""
+    """Section 1: analytical vs AD vs finite differences.
+    
+    LLM was used to generate code."""
     g_test = grad_ad(np.zeros(3), np.ones((4, 3)), np.ones(4), 0.0)
     assert g_test.dtype == np.float64, f"AD gradient is {g_test.dtype}, not float64"
     summary += [f"1) Gradient check ({AD_NAME} gradient dtype: {g_test.dtype}); relative difference "
@@ -127,7 +131,9 @@ def check_gradients(x_tr, x_te, y_tr, rng, summary):
 
 
 def gd_vs_closed_form(x_tr, x_te, y_tr, y_te, summary):
-    """Section 2: GD vs closed form; parameter error, cost gap and test MSE vs iteration."""
+    """Section 2: GD vs closed form; parameter error, cost gap and test MSE vs iteration.
+    
+    LLM was used to generate code."""
     X_tr, X_te, yc, y_mean = prepare(x_tr, x_te, y_tr, DEG_MAIN)
     summary.append(f"2) Gradient descent vs closed form, degree {DEG_MAIN}, theta_0 = 0, "
                    f"tolerance {TOL:.0e} on the relative parameter error:")
@@ -199,7 +205,9 @@ def gd_vs_closed_form(x_tr, x_te, y_tr, y_te, summary):
 
 
 def learning_rate_study(X_tr, yc, summary):
-    """Section 3: error curves, and iterations to tolerance vs eta, theory vs measurement."""
+    """Section 3: error curves, and iterations to tolerance vs eta, theory vs measurement.
+    
+    LLM was used to generate code."""
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
 
     h = np.linalg.eigvalsh(ridge_hessian(X_tr, 0.0))
@@ -254,7 +262,9 @@ def learning_rate_study(X_tr, yc, summary):
 
 
 def degree_study(x_tr, x_te, y_tr, y_te, summary):
-    """Section 4: condition number and iterations vs degree; high-degree GD path."""
+    """Section 4: condition number and iterations vs degree; high-degree GD path.
+    
+    LLM was used to generate code."""
     degrees = np.arange(1, 16)
     lams = (0.0, 1e-4, 1e-3, 1e-2)
     kappas = {lam: [] for lam in lams}

@@ -19,7 +19,9 @@ PART = "a"
 
 
 def ols_analysis(x, y, max_degree=15, test_size=0.3, seed=2026):
-    """Fit OLS for degrees 1..max_degree; return scores, parameters and condition numbers."""
+    """Fit OLS for degrees 1..max_degree; return scores, parameters and condition numbers.
+
+    LLM was used to generate code."""
     x_tr, x_te, y_tr, y_te = train_test_split(x, y, test_size=test_size, random_state=seed)
 
     res = {"degrees": np.arange(1, max_degree + 1),

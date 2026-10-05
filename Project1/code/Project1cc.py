@@ -33,7 +33,9 @@ N_VALUES = (50, 100, 500, 1000)
 
 
 def train_test_mse(x, y, degrees):
-    """Training and test MSE vs degree for a single train/test split (OLS)."""
+    """Training and test MSE vs degree for a single train/test split (OLS).
+
+    LLM was used to generate code."""
     x_tr, x_te, y_tr, y_te = train_test_split(x, y, test_size=TEST_SIZE, random_state=SEED)
     mse_tr, mse_te = [], []
     for p in degrees:
@@ -51,7 +53,8 @@ def bias_variance_analysis(x, y, degrees, n_boot, seed=SEED):
     Computed twice: over all test points, and over the test points that lie inside the
     range of the training inputs ("interior"). Test points outside that range require
     extrapolation of the polynomial and dominate the variance for high degrees.
-    """
+
+    LLM was used to generate code."""
     x_tr, x_te, y_tr, y_te = train_test_split(x, y, test_size=TEST_SIZE, random_state=seed)
     f_te = runge(x_te)                                  # true function at the test points
     inside = (x_te >= x_tr.min()) & (x_te <= x_tr.max())

@@ -50,7 +50,9 @@ MARKERS = ("o", "s", "^", "v", "d")
 
 
 def prepare(x_tr, x_te, y_tr, degree):
-    """Standardised design matrices (training statistics) and centred training targets."""
+    """Standardised design matrices (training statistics) and centred training targets.
+    
+    LLM was used to generate code."""
     sc = Scaler().fit(design_matrix(x_tr, degree), y_tr)
     return (sc.transform_X(design_matrix(x_tr, degree)),
             sc.transform_X(design_matrix(x_te, degree)), y_tr - sc.y_mean, sc.y_mean)
@@ -72,7 +74,9 @@ def run(method, params, eta, grad, theta_star, n_iter=N_ITER):
     k_first   first iteration with error < TOL (NaN if never),
     late_max  largest error from k_first to the end of the budget (or over the second half if
               TOL is never reached): below TOL means the method also STAYS converged
-              (adaptive methods can reach TOL and bounce back up)."""
+              (adaptive methods can reach TOL and bounce back up).
+              
+    LLM was used to generate code."""
     theta, err, _ = optimise(grad, np.zeros(len(theta_star)), eta, n_iter, method,
                              theta_ref=theta_star, **params)
     diverged = bool(len(err) < n_iter + 1 or not np.isfinite(err[-1]))

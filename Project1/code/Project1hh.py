@@ -69,7 +69,9 @@ def plain(text):
 
 
 class Problem:
-    """Data, closed-form reference and per-epoch monitor for one penalty value."""
+    """Data, closed-form reference and per-epoch monitor for one penalty value.
+    
+    LLM was used to generate code."""
 
     def __init__(self, X, X_te, y, y_te, y_mean, lam):
         self.X, self.y, self.lam, self.n = X, y, lam, len(y)
@@ -83,13 +85,17 @@ class Problem:
         return ridge_grad(theta, self.X[idx], self.y[idx], self.lam)
 
     def monitor(self, theta):
-        """(relative excess training cost, relative parameter error, test MSE)."""
+        """(relative excess training cost, relative parameter error, test MSE).
+        
+        LLM was used to generate code."""
         return ((ridge_cost(theta, self.X, self.y, self.lam) - self.C_star) / self.C_star,
                 np.linalg.norm(theta - self.theta_star) / np.linalg.norm(self.theta_star),
                 MSE(self.y_te, self.X_te @ theta + self.y_mean))
 
     def run(self, method, params, eta, batch, decay=False, n_epochs=N_EPOCHS):
-        """N_SEEDS runs. Returns (median history (epochs+1, 3), seconds per epoch, diverged)."""
+        """N_SEEDS runs. Returns (median history (epochs+1, 3), seconds per epoch, diverged).
+        
+        LLM was used to generate code."""
         updates_per_epoch = int(np.ceil(self.n / batch))
         T = DECAY_EPOCHS * updates_per_epoch
         schedule = (lambda t: eta / (1 + t / T)) if decay else None
@@ -106,7 +112,9 @@ class Problem:
         return np.median(np.array(hists), axis=0), np.mean(times), False
 
     def best_eta(self, method, params, etas, batch, decay=False):
-        """Learning rate from etas with the lowest median final excess cost."""
+        """Learning rate from etas with the lowest median final excess cost.
+        
+        LLM was used to generate code."""
         best = (np.inf, None, None, None)
         for eta in etas:
             hist, t_epoch, diverged = self.run(method, params, eta, batch, decay)

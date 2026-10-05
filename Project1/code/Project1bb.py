@@ -27,7 +27,9 @@ PART = "b"
 # Ridge analysis
 # ----------------------------------------------------------------------------
 def ridge_analysis(x_tr, x_te, y_tr, y_te, lams, degrees):
-    """Train/test MSE and R2 on a (lambda x degree) grid, plus parameters."""
+    """Train/test MSE and R2 on a (lambda x degree) grid, plus parameters.
+    
+    LLM was used to generate code."""
     shape = (len(lams), len(degrees))
     res = {"mse_tr": np.zeros(shape), "mse_te": np.zeros(shape),
            "r2_tr": np.zeros(shape), "r2_te": np.zeros(shape),

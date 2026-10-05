@@ -66,14 +66,18 @@ def new_lasso(warm_start=False):
 
 def lasso_fit(X, y, lam, model=None):
     """Lasso with our convention (alpha = lam/2). Pass a model to warm start along a lambda path.
-    Returns (coefficients, converged)."""
+    Returns (coefficients, converged).
+    
+    LLM was used to generate code."""
     model = new_lasso() if model is None else model
     model.set_params(alpha=lam / 2).fit(X, y)
     return model.coef_.copy(), model.n_iter_ < LASSO_MAX_ITER
 
 
 def fold_data(x, y, tr, va, degree):
-    """Scaler fitted on the training folds only; returns scaled train/validation data."""
+    """Scaler fitted on the training folds only; returns scaled train/validation data.
+    
+    LLM was used to generate code."""
     sc = Scaler().fit(design_matrix(x[tr], degree), y[tr])
     return (sc.transform_X(design_matrix(x[tr], degree)), y[tr] - sc.y_mean,
             sc.transform_X(design_matrix(x[va], degree)), y[va], sc.y_mean)
@@ -81,7 +85,9 @@ def fold_data(x, y, tr, va, degree):
 
 def cross_validate(x, y, folds):
     """CV MSE per fold. Returns dict method -> array (n_degrees, n_lambdas, n_folds);
-    OLS has n_lambdas = 1. Unconverged Lasso fits give NaN for the whole (degree, lambda) cell."""
+    OLS has n_lambdas = 1. Unconverged Lasso fits give NaN for the whole (degree, lambda) cell.
+    
+    LLM was used to generate code."""
     out = {"OLS": np.empty((len(DEGREES), 1, len(folds))),
            "Ridge": np.empty((len(DEGREES), len(LAMBDAS), len(folds))),
            "Lasso": np.empty((len(DEGREES), len(LAMBDAS), len(folds)))}
@@ -101,7 +107,9 @@ def cross_validate(x, y, folds):
 
 
 def select(cv, rule="min"):
-    """Index (degree, lambda) of the best model: lowest mean CV MSE, or the one-SE rule."""
+    """Index (degree, lambda) of the best model: lowest mean CV MSE, or the one-SE rule.
+    
+    LLM was used to generate code."""
     mean, se = cv.mean(axis=2), cv.std(axis=2, ddof=1) / np.sqrt(cv.shape[2])
     i, j = np.unravel_index(np.nanargmin(mean), mean.shape)
     if rule == "min":

@@ -42,13 +42,17 @@ N_BOOT, TEST_SIZE = 300, 0.3          # bootstrap settings from part c)
 # ----------------------------------------------------------------------------
 def sk_model(degree, lam=None, n_train=None):
     """Scikit-Learn pipeline: polynomial features x..x^p -> standardisation -> OLS/Ridge.
-    lam = None gives OLS; otherwise Ridge with alpha = n_train * lam (our convention)."""
+    lam = None gives OLS; otherwise Ridge with alpha = n_train * lam (our convention).
+    
+    LLM was used to generate code."""
     reg = LinearRegression() if lam is None else Ridge(alpha=n_train * lam)
     return make_pipeline(PolynomialFeatures(degree, include_bias=False), StandardScaler(), reg)
 
 
 def sk_cv_mse(x, y, degree, kfold, lam=None):
-    """Fold MSEs from Scikit-Learn cross_val_score."""
+    """Fold MSEs from Scikit-Learn cross_val_score.
+    
+    LLM was used to generate code."""
     n_train = len(x) - len(x) // kfold.get_n_splits()
     scores = cross_val_score(sk_model(degree, lam, n_train), x[:, None], y, cv=kfold,
                              scoring="neg_mean_squared_error")
@@ -57,7 +61,9 @@ def sk_cv_mse(x, y, degree, kfold, lam=None):
 
 def own_cv(x, y, degree, kfold, lam=0.0):
     """Own k-fold CV with utils (Scaler + ols_fit/ridge_fit), same folds as `kfold`.
-    Returns (fold MSEs, squared error of every data point when it is in the test fold)."""
+    Returns (fold MSEs, squared error of every data point when it is in the test fold).
+    
+    LLM was used to generate code."""
     fold_mse, sq_err = [], np.empty(len(x))
     for tr, te in kfold.split(x):
         X_tr, X_te = design_matrix(x[tr], degree), design_matrix(x[te], degree)
@@ -70,7 +76,9 @@ def own_cv(x, y, degree, kfold, lam=0.0):
 
 
 def leaky_cv_ridge(x, y, degree, kfold, lam):
-    """For comparison only: standardisation fitted on ALL data before the CV loop (leakage)."""
+    """For comparison only: standardisation fitted on ALL data before the CV loop (leakage).
+    
+    LLM was used to generate code."""
     X_all = design_matrix(x, degree)
     X_s = (X_all - X_all.mean(axis=0)) / X_all.std(axis=0)
     fold_mse = []
