@@ -37,12 +37,16 @@ RESULTS_DIR = Path(__file__).resolve().parent.parent / "results"
 # Data
 # ----------------------------------------------------------------------------
 def runge(x):
-    """Runge's function f(x) = 1/(1+25x^2)."""
+    """Runge's function f(x) = 1/(1+25x^2).
+    
+    LLM was used to generate code."""
     return 1.0 / (1.0 + 25.0 * x**2)
 
 
 def runge_data(n=100, noise=0.1, xmin=-1.0, xmax=1.0, seed=2026):
-    """Uniformly sampled x on [xmin, xmax] and noisy Runge data y = f(x) + N(0, noise^2)."""
+    """Uniformly sampled x on [xmin, xmax] and noisy Runge data y = f(x) + N(0, noise^2).
+    
+    LLM was used to generate code."""
     rng = np.random.default_rng(seed)
     x = rng.uniform(xmin, xmax, n)
     y = runge(x) + noise * rng.standard_normal(n)
@@ -50,7 +54,9 @@ def runge_data(n=100, noise=0.1, xmin=-1.0, xmax=1.0, seed=2026):
 
 
 def design_matrix(x, degree):
-    """Vandermonde matrix without the constant column: columns x^1, ..., x^degree."""
+    """Vandermonde matrix without the constant column: columns x^1, ..., x^degree.
+    
+    LLM was used to generate code."""
     return x[:, None] ** np.arange(1, degree + 1)
 
 
@@ -65,6 +71,8 @@ class Scaler:
         X_train_s, X_test_s = sc.transform_X(X_train), sc.transform_X(X_test)
         theta = fit(X_train_s, y_train - sc.y_mean)
         y_pred = X_test_s @ theta + sc.y_mean
+
+    LLM was used to generate code.
     """
 
     def fit(self, X, y):
@@ -92,12 +100,16 @@ def R2(y_data, y_model):
 # Regression
 # ----------------------------------------------------------------------------
 def ols_fit(X, y):
-    """OLS parameters via the pseudoinverse (SVD), more stable than the normal equations."""
+    """OLS parameters via the pseudoinverse (SVD), more stable than the normal equations.
+    
+    LLM was used to generate code."""
     return np.linalg.pinv(X) @ y
 
 
 def ridge_fit(X, y, lam):
-    """Closed-form Ridge (see module docstring for the convention). lam = 0 -> OLS via pinv."""
+    """Closed-form Ridge (see module docstring for the convention). lam = 0 -> OLS via pinv.
+    
+    LLM was used to generate code."""
     if lam == 0:
         return ols_fit(X, y)
     n, p = X.shape
@@ -116,6 +128,8 @@ def bootstrap_predictions(x_tr, y_tr, x_te, degree, n_boot, rng, fit=ols_fit):
 
     fit: function fit(X, y) -> theta, e.g. ols_fit or lambda X, y: ridge_fit(X, y, lam).
     Returns an array of shape (len(x_te), n_boot).
+
+    LLM was used to generate code.
     """
     n_tr = len(x_tr)
     X_te = design_matrix(x_te, degree)
@@ -139,6 +153,8 @@ def bias_variance(y_ref, preds):
     bias2 = mean_i (y_i - mean_b yhat_ib)^2
     var   = mean_i var_b (yhat_ib)
     With these definitions error = bias2 + var holds exactly.
+
+    LLM was used to generate code.
     """
     mean_pred = preds.mean(axis=1)
     error = np.mean((y_ref[:, None] - preds) ** 2)
@@ -151,18 +167,24 @@ def bias_variance(y_ref, preds):
 # Cost functions, gradients and Hessian (OLS = Ridge with lam = 0)
 # ----------------------------------------------------------------------------
 def ridge_cost(theta, X, y, lam=0.0):
-    """C(theta) = (1/n)||y - X theta||^2 + lam ||theta||^2."""
+    """C(theta) = (1/n)||y - X theta||^2 + lam ||theta||^2.
+    
+    LLM was used to generate code."""
     return np.mean((y - X @ theta) ** 2) + lam * np.sum(theta ** 2)
 
 
 def ridge_grad(theta, X, y, lam=0.0):
-    """Analytical gradient: (2/n) X^T (X theta - y) + 2 lam theta."""
+    """Analytical gradient: (2/n) X^T (X theta - y) + 2 lam theta.
+    
+    LLM was used to generate code."""
     n = X.shape[0]
     return (2.0 / n) * X.T @ (X @ theta - y) + 2.0 * lam * theta
 
 
 def ridge_hessian(X, lam=0.0):
-    """Hessian (constant): (2/n) X^T X + 2 lam I."""
+    """Hessian (constant): (2/n) X^T X + 2 lam I.
+    
+    LLM was used to generate code."""
     n, p = X.shape
     return (2.0 / n) * X.T @ X + 2.0 * lam * np.eye(p)
 
@@ -172,6 +194,8 @@ def autodiff_backend():
 
     Prefers JAX (in double precision, with jit), falls back to Autograd.
     The cost function to differentiate must be written with the returned numpy-like module.
+
+    LLM was used to generate code.
     """
     try:
         import jax
