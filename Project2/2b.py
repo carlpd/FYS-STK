@@ -1,31 +1,34 @@
 import numpy as np
-import jax
-jax.config.update("jax_enable_x64", True)   # 64-bit floats, so that results agree with numpy to ~1e-15
-import jax.numpy as jnp                    # numpy-compatible functions that JAX can differentiate
-from sklearn import datasets
 import matplotlib.pyplot as plt
+from sklearn import datasets
 from sklearn.metrics import accuracy_score
+import jax
+jax.config.update("jax_enable_x64", True)   # float64, so that the checks agree with numpy to 1e-15
+import jax.numpy as jnp
 
+#Defining the Runge function
 def Runge(x):
     return 1/(1+25*x**2)
 
-
-# Defining some activation functions
+#Defining activation functions
 def ReLU(z):
     return jnp.where(z > 0, z, 0.0)
 
-
 def sigmoid(z):
-    return 1 / (1 + jnp.exp(-z))
-
+    return 1.0/(1.0 + jnp.exp(-z))
 
 def softmax(z):
-    """Compute softmax values for each set of scores in the rows of the matrix z.
-    Used with batched input data: one row of scores per sample."""
+    """Softmax of each row of the matrix z: one row of scores per sample."""
     e_z = jnp.exp(z - jnp.max(z, axis=1, keepdims=True))
-    return e_z / jnp.sum(e_z, axis=1, keepdims=True)
-"""
-def create_layers(network_input_size, layer_output_sizes): #batch
+    return e_z/jnp.sum(e_z, axis=1, keepdims=True)
+
+def softmax_vec(z):
+    """Softmax of a single vector of scores."""
+    e_z = jnp.exp(z - jnp.max(z))
+    return e_z/jnp.sum(e_z)
+
+
+def create_layers(network_input_size, layer_output_sizes):
     layers = []
 
     i_size = network_input_size
@@ -36,100 +39,80 @@ def create_layers(network_input_size, layer_output_sizes): #batch
 
         i_size = layer_output_size
     return layers
-"""
-def create_layers(sizes, hidden_activation="sigmoid", rng=None):
-    """A list of (W, b) pairs, W of shape (inputs, outputs) as in the template.
 
-    sizes = [784, 100, 10] gives two layers: 784 -> 100 -> 10.  The weights are
-    drawn with the variance of Eq. (8.74) (He) for ReLU and 1/inputs otherwise,
-    the biases are set to 0.01 as in the template.
-    """
-    rng = np.random.default_rng(2026) if rng is None else rng
-    layers = []
-    for n_in, n_out in zip(sizes[:-1], sizes[1:]):
-        scale = np.sqrt(2.0 / n_in) if hidden_activation == "relu" else np.sqrt(1.0 / n_in)
-        W = rng.normal(0.0, scale, (n_in, n_out))
-        b = np.zeros(n_out) + 0.01
-        layers.append((W, b))
-    return layers
-def feed_forward(inputs, layers, activation_funcs): #batch
+def feed_forward(inputs, layers, activation_funcs):
     a = inputs
     for (W, b), activation_func in zip(layers, activation_funcs):
         z = a@W+b
         a = activation_func(z)
     return a
+def cross_entropy(predict, target):
+    return jnp.sum(-target * jnp.log(predict))
 
-def cost(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2=0.0, lmbd1=0.0):
-    """The cost of Eq. (8.31): data term for the chosen head plus L2 and L1 penalties on the weights."""
-    out = predict(X, layers, hidden_activation, head)
-    n = X.shape[0]
-    if head == "mse":                            # Eq. (8.32)
-        data = 0.5 * np.sum((out - Y) ** 2) / n
-    elif head == "binary":                       # Eq. (5.13), averaged
-        p = np.clip(out, 1e-12, 1 - 1e-12)
-        data = -np.mean(Y * np.log(p) + (1 - Y) * np.log(1 - p))
-    else:                                        # Eq. (5.28), averaged, one-hot Y
-        p = np.clip(out, 1e-12, 1.0)
-        data = -np.mean(np.sum(Y * np.log(p), axis=1))
-    reg = sum(lmbd2 * np.sum(W ** 2) + lmbd1 * np.sum(np.abs(W)) for W, _ in layers)
-    return data + reg
-def accuracy(X, y, layers, hidden_activation, head):
-    """Fraction of correct labels; y holds integer labels for softmax, 0/1 for binary."""
-    out = predict(X, layers, hidden_activation, head)
-    if head == "softmax":
-        return np.mean(np.argmax(out, axis=1) == y)
-    return np.mean((out[:, 0] > 0.5) == (y > 0.5))
 
-def backpropagation(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2=0.0, lmbd1=0.0):
-    """Eqs. (8.65)-(8.68) for all samples at once; returns a list of (dW, db) with the shapes of (W, b)."""
-    _, fp = ACTIVATIONS[hidden_activation]
-    n = X.shape[0]
-    z, a = feed_forward(X, layers, hidden_activation, head)
-    delta = (a[-1] - Y) / n                      # Eq. (8.69): the same line for all three heads
-    grads = [None] * len(layers)
-    for l in range(len(layers) - 1, -1, -1):
-        W, _ = layers[l]
-        dW = a[l].T @ delta                      # Eq. (8.68): outer products, summed over the samples
-        dW += 2.0 * lmbd2 * W + lmbd1 * np.sign(W)   # the penalties of Section 8.12 (weights only)
-        db = np.sum(delta, axis=0)               # Eq. (8.67)
-        grads[l] = (dW, db)
-        if l > 0:
-            delta = (delta @ W.T) * fp(z[l - 1])     # Eq. (8.66): pull back through W, modulate by f'
-    return grads
+def cost(input, layers, activation_funcs, target):
+    predict = feed_forward(input, layers, activation_funcs)
+    return cross_entropy(predict, target)
 
-def train(X, Y, layers, hidden_activation="sigmoid", head="mse", gamma=0.1, epochs=100,
-          batch_size=None, lmbd2=0.0, lmbd1=0.0, rng=None, X_test=None, y_test=None, verbose=False):
-    """Plain gradient descent, Eq. (8.70), on minibatches (batch_size=None: the whole set).
+def train_network(
+    inputs, layers, activation_funcs, targets, gamma=0.001, epochs=100
+):
+    for i in range(epochs):
+        layers_grad = gradient_func(inputs, layers, activation_funcs, targets)
+        layers = [(W - gamma*W_g, b -gamma*b_g) for (W, b), (W_g, b_g) in zip(layers, layers_grad)]
+        # layersnew = []
+        # for (W, b), (W_g, b_g) in zip(layers, layers_grad):
+        #     W=W - W_g
+        #     b=b -b_g
+        #     layersnew.append((W,b))
+        #     if np.isnan(np.any(W)):
+        #         print("W", i)
+        #     if np.isnan(np.any(b)):
+        #         print("b", i)
+        # layers = layersnew
+    return layers
+"""
+def accuracy(predictions, targets):
+    one_hot_predictions = np.zeros(predictions.shape)
 
-    Returns the trained layers and a history with the training cost after
-    every epoch and, when a test set is given, the test accuracy.
-    """
-    rng = np.random.default_rng(2026) if rng is None else rng
-    n = X.shape[0]
-    M = n if batch_size is None else batch_size
-    history = {"cost": [], "test_accuracy": []}
-    for epoch in range(epochs):
-        order = rng.permutation(n)
-        for s in range(0, n, M):
-            idx = order[s:s + M]
-            grads = backpropagation(X[idx], Y[idx], layers, hidden_activation, head, lmbd2, lmbd1)
-            layers = [(W - gamma * dW, b - gamma * db) for (W, b), (dW, db) in zip(layers, grads)]
-        history["cost"].append(cost(X, Y, layers, hidden_activation, head, lmbd2, lmbd1))
-        if X_test is not None:
-            history["test_accuracy"].append(accuracy(X_test, y_test, layers, hidden_activation, head))
-        if verbose:
-            msg = f"epoch {epoch + 1:3d}: cost {history['cost'][-1]:.4f}"
-            if X_test is not None:
-                msg += f"  test accuracy {history['test_accuracy'][-1]:.4f}"
-            print(msg)
-    return layers, history
+    for i, prediction in enumerate(predictions):
+        one_hot_predictions[i, np.argmax(prediction)] = 1
+    return accuracy_score(one_hot_predictions, targets)
+"""
 
-def predict(X, layers, hidden_activation="sigmoid", head="mse"):
-    """The output of the network: a vector of predictions, probabilities, or class probabilities."""
-    return feed_forward(X, layers, hidden_activation, head)[1][-1]
-
+rng = np.random.default_rng(2026)
 n = 100
 x = np.sort(rng.uniform(-1.0, 1.0, n))
 sigma = 0.1
-y = runge(x) + rng.normal(0.0, sigma, n)
-X = x.reshape(-1, 1)
+y = Runge(x) + rng.normal(0.0, sigma, n)
+X= x.reshape(-1, 1)
+#X=(X-X.mean(axis=0))/X.std(axis=0) #Scaling
+
+input_size=1
+act_funcs=[sigmoid, sigmoid]
+layer_output_sizes=[10, 1]
+layers=create_layers(input_size,layer_output_sizes)
+
+
+
+gradient_func = jax.grad(
+    cost, argnums=1
+) 
+layers_grad = gradient_func(
+    X, layers, act_funcs, y
+)
+
+lays_t=train_network(
+    X, layers, act_funcs, y, gamma=0.001, epochs=100
+)
+for i in lays_t:
+    W,b = i
+    print("W shape: ", W.shape)
+    print("b shape: ", b.shape)
+#print(lays_t)
+preds=feed_forward(X, lays_t, act_funcs)
+print(preds)
+print(preds.shape)
+y=y.reshape(100, 1)
+print(y)
+print(y.shape)
