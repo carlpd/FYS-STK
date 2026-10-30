@@ -89,8 +89,8 @@ X= x.reshape(-1, 1)
 #X=(X-X.mean(axis=0))/X.std(axis=0) #Scaling
 
 input_size=1
-act_funcs=[sigmoid, sigmoid]
-layer_output_sizes=[10, 1]
+act_funcs=[sigmoid, sigmoid, sigmoid]
+layer_output_sizes=[10, 5, 1]
 layers=create_layers(input_size,layer_output_sizes)
 
 
@@ -105,14 +105,23 @@ layers_grad = gradient_func(
 lays_t=train_network(
     X, layers, act_funcs, y, gamma=0.001, epochs=100
 )
+"""
 for i in lays_t:
     W,b = i
     print("W shape: ", W.shape)
     print("b shape: ", b.shape)
+"""
 #print(lays_t)
 preds=feed_forward(X, lays_t, act_funcs)
 print(preds)
-print(preds.shape)
+print(preds.shape[0])
 y=y.reshape(100, 1)
 print(y)
 print(y.shape)
+
+mse=np.sum((preds-y)**2)/preds.shape[0]
+print(mse)
+
+plt.plot(X, preds,label="Predictions")
+plt.plot(X, y, label="data")
+plt.show()
