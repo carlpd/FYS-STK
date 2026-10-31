@@ -27,6 +27,9 @@ def softmax_vec(z):
     e_z = jnp.exp(z - jnp.max(z))
     return e_z/jnp.sum(e_z)
 
+def identity(z):
+    return z
+
 
 def create_layers(network_input_size, layer_output_sizes):
     layers = []
@@ -49,11 +52,14 @@ def feed_forward(inputs, layers, activation_funcs):
 def cross_entropy(predict, target):
     return jnp.sum(-target * jnp.log(predict))
 
-
+"""
 def cost(input, layers, activation_funcs, target):
     predict = feed_forward(input, layers, activation_funcs)
     return cross_entropy(predict, target)
-
+"""
+def cost(input, layers, activation_funcs, target):
+    predict = feed_forward(input, layers, activation_funcs)
+    return jnp.mean((predict-target)**2)
 def train_network(
     inputs, layers, activation_funcs, targets, gamma=0.001, epochs=100
 ):
@@ -85,11 +91,18 @@ n = 100
 x = np.sort(rng.uniform(-1.0, 1.0, n))
 sigma = 0.1
 y = Runge(x) + rng.normal(0.0, sigma, n)
-X= x.reshape(-1, 1)
+X= x.reshape(100, 1)
+X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
+y = y - np.mean(y)
+y=y.reshape(-1,1)
+
+
+#print(y)
+
 #X=(X-X.mean(axis=0))/X.std(axis=0) #Scaling
 
 input_size=1
-act_funcs=[sigmoid, sigmoid, sigmoid]
+act_funcs=[sigmoid, sigmoid, identity]
 layer_output_sizes=[10, 5, 1]
 layers=create_layers(input_size,layer_output_sizes)
 
@@ -113,14 +126,14 @@ for i in lays_t:
 """
 #print(lays_t)
 preds=feed_forward(X, lays_t, act_funcs)
-print(preds)
+#print(preds)
 print(preds.shape[0])
-y=y.reshape(100, 1)
-print(y)
+#y=y.reshape(100, 1)
+#print(y)
 print(y.shape)
 
 mse=np.sum((preds-y)**2)/preds.shape[0]
-print(mse)
+#print(mse)
 
 plt.plot(X, preds,label="Predictions")
 plt.plot(X, y, label="data")
