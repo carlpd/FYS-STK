@@ -46,7 +46,7 @@ def create_layers(network_input_size, layer_output_sizes):
 def feed_forward(inputs, layers, activation_funcs):
     a = inputs
     for (W, b), activation_func in zip(layers, activation_funcs):
-        z = a@W+b
+        z = a @ W + b
         a = activation_func(z)
     return a
 def cross_entropy(predict, target):
@@ -59,7 +59,8 @@ def cost(input, layers, activation_funcs, target):
 """
 def cost(input, layers, activation_funcs, target):
     predict = feed_forward(input, layers, activation_funcs)
-    return jnp.mean((predict-target)**2)
+    return jnp.mean((predict - target)**2)
+
 def train_network(
     inputs, layers, activation_funcs, targets, gamma=0.001, epochs=100
 ):
@@ -91,31 +92,32 @@ n = 100
 x = np.sort(rng.uniform(-1.0, 1.0, n))
 sigma = 0.01
 y = Runge(x) + rng.normal(0.0, sigma, n)
-X= x.reshape(100, 1)
+X = x.reshape(100, 1)
 X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
 y = y - np.mean(y)
-y=y.reshape(-1,1)
+y = y.reshape(-1,1)
 
 
 #print(y)
 
 #X=(X-X.mean(axis=0))/X.std(axis=0) #Scaling
 
-input_size=1
-act_funcs=[sigmoid, sigmoid, identity]
-layer_output_sizes=[10, 5, 1]
-layers=create_layers(input_size,layer_output_sizes)
+input_size = 1
+act_funcs = [sigmoid, sigmoid, identity]
+layer_output_sizes = [10, 5, 1]
+layers = create_layers(input_size, layer_output_sizes)
 
 
 
 gradient_func = jax.grad(
     cost, argnums=1
-) 
+)
+
 layers_grad = gradient_func(
     X, layers, act_funcs, y
 )
 
-lays_t=train_network(
+lays_t = train_network(
     X, layers, act_funcs, y, gamma=0.5, epochs=10000
 )
 """
@@ -132,9 +134,9 @@ print(preds.shape[0])
 #print(y)
 print(y.shape)
 
-mse=np.sum((preds-y)**2)/preds.shape[0]
+mse=np.sum((preds - y)**2) / preds.shape[0]
 #print(mse)
 
-plt.plot(X, preds,label="Predictions")
-plt.plot(X, y, label="data")
+plt.plot(X, preds,label = "Predictions")
+plt.plot(X, y, label = "data")
 plt.show()
