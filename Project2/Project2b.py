@@ -15,17 +15,17 @@ def ReLU(z):
     return jnp.where(z > 0, z, 0.0)
 
 def sigmoid(z):
-    return 1.0/(1.0 + jnp.exp(-z))
+    return 1.0 / (1.0 + jnp.exp(-z))
 
 def softmax(z):
     """Softmax of each row of the matrix z: one row of scores per sample."""
     e_z = jnp.exp(z - jnp.max(z, axis=1, keepdims=True))
-    return e_z/jnp.sum(e_z, axis=1, keepdims=True)
+    return e_z / jnp.sum(e_z, axis=1, keepdims=True)
 
 def softmax_vec(z):
     """Softmax of a single vector of scores."""
     e_z = jnp.exp(z - jnp.max(z))
-    return e_z/jnp.sum(e_z)
+    return e_z / jnp.sum(e_z)
 
 def identity(z):
     return z
@@ -87,56 +87,57 @@ def accuracy(predictions, targets):
     return accuracy_score(one_hot_predictions, targets)
 """
 
-rng = np.random.default_rng(2026)
-n = 100
-x = np.sort(rng.uniform(-1.0, 1.0, n))
-sigma = 0.01
-y = Runge(x) + rng.normal(0.0, sigma, n)
-X = x.reshape(100, 1)
-X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-y = y - np.mean(y)
-y = y.reshape(-1,1)
+if __name__ == "__main__":
+    rng = np.random.default_rng(2026)
+    n = 100
+    x = np.sort(rng.uniform(-1.0, 1.0, n))
+    sigma = 0.01
+    y = Runge(x) + rng.normal(0.0, sigma, n)
+    X = x.reshape(100, 1)
+    X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
+    y = y - np.mean(y)
+    y = y.reshape(-1,1)
 
 
-#print(y)
+    #print(y)
 
-#X=(X-X.mean(axis=0))/X.std(axis=0) #Scaling
+    #X=(X-X.mean(axis=0))/X.std(axis=0) #Scaling
 
-input_size = 1
-act_funcs = [sigmoid, sigmoid, identity]
-layer_output_sizes = [10, 5, 1]
-layers = create_layers(input_size, layer_output_sizes)
+    input_size = 1
+    act_funcs = [sigmoid, sigmoid, identity]
+    layer_output_sizes = [10, 5, 1]
+    layers = create_layers(input_size, layer_output_sizes)
 
 
 
-gradient_func = jax.grad(
-    cost, argnums=1
-)
+    gradient_func = jax.grad(
+        cost, argnums=1
+    )
 
-layers_grad = gradient_func(
-    X, layers, act_funcs, y
-)
+    layers_grad = gradient_func(
+        X, layers, act_funcs, y
+    )
 
-lays_t = train_network(
-    X, layers, act_funcs, y, gamma=0.5, epochs=10000
-)
-"""
-for i in lays_t:
-    W,b = i
-    print("W shape: ", W.shape)
-    print("b shape: ", b.shape)
-"""
-#print(lays_t)
-preds = feed_forward(X, lays_t, act_funcs)
-#print(preds)
-print(preds.shape[0])
-#y = y.reshape(100, 1)
-#print(y)
-print(y.shape)
+    lays_t = train_network(
+        X, layers, act_funcs, y, gamma=0.5, epochs=10000
+    )
+    """
+    for i in lays_t:
+        W,b = i
+        print("W shape: ", W.shape)
+        print("b shape: ", b.shape)
+    """
+    #print(lays_t)
+    preds = feed_forward(X, lays_t, act_funcs)
+    #print(preds)
+    print(preds.shape[0])
+    #y = y.reshape(100, 1)
+    #print(y)
+    print(y.shape)
 
-mse=np.sum((preds - y)**2) / preds.shape[0]
-#print(mse)
+    mse=np.sum((preds - y)**2) / preds.shape[0]
+    #print(mse)
 
-plt.plot(X, preds,label = "Predictions")
-plt.plot(X, y, label = "data")
-plt.show()
+    plt.plot(X, preds,label = "Predictions")
+    plt.plot(X, y, label = "data")
+    plt.show()
