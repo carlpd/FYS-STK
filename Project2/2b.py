@@ -127,10 +127,10 @@ for i in lays_t:
     print("b shape: ", b.shape)
 """
 #print(lays_t)
-preds=feed_forward(X, lays_t, act_funcs)
+preds = feed_forward(X, lays_t, act_funcs)
 #print(preds)
 print(preds.shape[0])
-#y=y.reshape(100, 1)
+#y = y.reshape(100, 1)
 #print(y)
 print(y.shape)
 
