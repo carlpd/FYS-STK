@@ -36,8 +36,8 @@ def create_layers(network_input_size, layer_output_sizes):
 
     i_size = network_input_size
     for layer_output_size in layer_output_sizes:
-        W =np.random.randn(i_size, layer_output_size)
-        b =np.random.randn(layer_output_size)
+        W =rng.standard_normal((i_size, layer_output_size))*0.5
+        b =rng.standard_normal(layer_output_size)#np.zeros(layer_output_size)
         layers.append((W, b))
 
         i_size = layer_output_size
@@ -89,7 +89,7 @@ def accuracy(predictions, targets):
 rng = np.random.default_rng(2026)
 n = 100
 x = np.sort(rng.uniform(-1.0, 1.0, n))
-sigma = 0.1
+sigma = 0.01
 y = Runge(x) + rng.normal(0.0, sigma, n)
 X= x.reshape(100, 1)
 X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
@@ -116,7 +116,7 @@ layers_grad = gradient_func(
 )
 
 lays_t=train_network(
-    X, layers, act_funcs, y, gamma=0.001, epochs=100
+    X, layers, act_funcs, y, gamma=0.5, epochs=10000
 )
 """
 for i in lays_t:
