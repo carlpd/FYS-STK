@@ -39,6 +39,7 @@ def feed_forward(X, layers, hidden_activation="sigmoid", head="mse"):
     """
     ACTIVATIONS = {"sigmoid": (sigmoid, sigmoid_prime),
                "relu": (ReLU, ReLU_prime),
+               "lrelu": (LReLU, LReLU_prime),
                "identity": (identity, identity_prime)}
     OUTPUT = {"mse": identity, "binary": sigmoid, "softmax": softmax}
     f, _ = ACTIVATIONS[hidden_activation]
@@ -54,6 +55,19 @@ def feed_forward(X, layers, hidden_activation="sigmoid", head="mse"):
 
 def ReLU(z):
     return jnp.where(z > 0, z, 0.0)
+def LReLU(z):
+    """
+    Leaky ReLU
+
+    Argument:
+        z
+
+    Returns:
+        z,          if z >  0,
+        alpha * z,  if z <= 0,      alpha = 0.01
+    """
+    alpha = 0.01
+    return jax.nn.leaky_relu(z, negative_slope=alpha)
 
 def sigmoid(z):
     return 1.0 / (1.0 + jnp.exp(-z))
@@ -77,12 +91,16 @@ def sigmoid_prime(z):
 
 def ReLU_prime(z):
     return (z > 0).astype(float)
+def LReLU_prime(z):
+    alpha=0.01
+    return jnp.where(z>0, 1, alpha)
 
 def identity_prime(z):
     return np.ones_like(z)
 
 ACTIVATIONS = {"sigmoid": (sigmoid, sigmoid_prime),
                "relu": (ReLU, ReLU_prime),
+               "lrelu": (LReLU, LReLU_prime),
                "identity": (identity, identity_prime)}
 
 OUTPUT = {"mse": identity, "binary": sigmoid, "softmax": softmax}
@@ -92,6 +110,7 @@ def backpropagation(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2
     """Eqs. (8.65)-(8.68) for all samples at once; returns a list of (dW, db) with the shapes of (W, b)."""
     ACTIVATIONS = {"sigmoid": (sigmoid, sigmoid_prime),
                "relu": (ReLU, ReLU_prime),
+               "lrelu": (LReLU, LReLU_prime),
                "identity": (identity, identity_prime)}
     _, fp = ACTIVATIONS[hidden_activation]
     n = X.shape[0]
