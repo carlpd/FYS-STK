@@ -31,7 +31,7 @@ def identity(z):
     return z
 
 
-def create_layers(network_input_size, layer_output_sizes):
+def create_layers(network_input_size, layer_output_sizes, rng=np.random.default_rng(2026)):
     layers = []
 
     i_size = network_input_size
@@ -65,6 +65,7 @@ def train_network(
     inputs, layers, activation_funcs, targets, gamma=0.001, epochs=100
 ):
     for i in range(epochs):
+        gradient_func = jax.grad(cost, argnums=1)
         layers_grad = gradient_func(inputs, layers, activation_funcs, targets)
         layers = [(W - gamma*W_g, b -gamma*b_g) for (W, b), (W_g, b_g) in zip(layers, layers_grad)]
         # layersnew = []
