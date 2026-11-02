@@ -65,26 +65,28 @@ if __name__ == "__main__":
     y = y - np.mean(y)
     y = y.reshape(-1,1)
     x_test = np.sort(rng.uniform(-1.0, 1.0, n))
-    y_test = Runge(x) + rng.normal(0.0, sigma, n)
+    y_test = Runge(x_test) + rng.normal(0.0, sigma, n)
     X_test = x.reshape(100, 1)
+    X_test = (X_test - np.mean(X_test, axis=0)) / np.std(X_test, axis=0)
+    y_test = y_test - np.mean(y_test)
     y_test=y_test.reshape(-1,1)
 
     input_size = 1
 
     act_funcs1 = [ReLU, identity]
     layer_output_sizes1 = [10, 1]
-    pred1=make_model_FF(X,y,layer_output_sizes=layer_output_sizes1, act_funcs=act_funcs1, epochs=10000, X_test=X_test)
+    pred1=make_model_FF(X,y,layer_output_sizes=layer_output_sizes1, act_funcs=act_funcs1, gamma=0.01, epochs=10000, X_test=X_test)
     
     act_funcs2 = [LReLU, identity]
     layer_output_sizes2 = [10, 1]
-    pred2=make_model_FF(X,y,layer_output_sizes=layer_output_sizes2, act_funcs=act_funcs2, epochs=10000, X_test=X_test)
+    pred2=make_model_FF(X,y,layer_output_sizes=layer_output_sizes2, act_funcs=act_funcs2, gamma=0.07, epochs=10000, X_test=X_test)
 
     act_funcs3 = [sigmoid, identity]
     layer_output_sizes3 = [10, 1]
     pred3=make_model_FF(X,y,layer_output_sizes=layer_output_sizes3, act_funcs=act_funcs3, epochs=10000, X_test=X_test)
 
-    act_funcs4=[sigmoid, LReLU, ReLU]
-    layer_output_sizes4 = [10, 5, 1]
+    act_funcs4=[sigmoid, LReLU, ReLU, identity]
+    layer_output_sizes4 = [5, 10, 3, 1]
     pred4=make_model_FF(X,y,layer_output_sizes=layer_output_sizes4, act_funcs=act_funcs4, epochs=10000, X_test=X_test)
     
     plt.plot(X_test, y_test, label="Test data")
