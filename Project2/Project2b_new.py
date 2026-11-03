@@ -84,6 +84,7 @@ def softmax_vec(z):
 
 def identity(z):
     return z
+
 def softmax(z):
     """Compute softmax values for each set of scores in the rows of the matrix z.
     Used with batched input data: one row of scores per sample."""
@@ -96,15 +97,16 @@ def sigmoid_prime(z):
 
 def ReLU_prime(z):
     return (z > 0).astype(float)
+
 def LReLU_prime(z):
     alpha=0.01
     return jnp.where(z>0, 1, alpha)
 
 def identity_prime(z):
     return np.ones_like(z)
+
 def softmax_prime(z):
-    s=softmax(z)
-    return (s-s**2)
+    return jax.jacobian(softmax(z))
 
 ACTIVATIONS = {"sigmoid": (sigmoid, sigmoid_prime),
                "relu": (ReLU, ReLU_prime),
