@@ -40,7 +40,8 @@ def feed_forward(X, layers, hidden_activation="sigmoid", head="mse"):
     ACTIVATIONS = {"sigmoid": (sigmoid, sigmoid_prime),
                "relu": (ReLU, ReLU_prime),
                "lrelu": (LReLU, LReLU_prime),
-               "identity": (identity, identity_prime)}
+               "identity": (identity, identity_prime),
+               "softmax": {softmax, softmax_prime}}
     OUTPUT = {"mse": identity, "binary": sigmoid, "softmax": softmax}
     f, _ = ACTIVATIONS[hidden_activation]
     a, z = [X], []
@@ -85,11 +86,6 @@ def softmax_vec(z):
 def identity(z):
     return z
 
-def softmax(z):
-    """Compute softmax values for each set of scores in the rows of the matrix z.
-    Used with batched input data: one row of scores per sample."""
-    e_z = jnp.exp(z - jnp.max(z, axis=1, keepdims=True))
-    return e_z / jnp.sum(e_z, axis=1, keepdims=True)
 
 def sigmoid_prime(z):
     s = sigmoid(z)
@@ -106,7 +102,7 @@ def identity_prime(z):
     return np.ones_like(z)
 
 def softmax_prime(z):
-    return jax.jacobian(softmax(z))
+    return jax.jacobian(softmax, z)
 
 ACTIVATIONS = {"sigmoid": (sigmoid, sigmoid_prime),
                "relu": (ReLU, ReLU_prime),
@@ -122,7 +118,8 @@ def backpropagation(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2
     ACTIVATIONS = {"sigmoid": (sigmoid, sigmoid_prime),
                "relu": (ReLU, ReLU_prime),
                "lrelu": (LReLU, LReLU_prime),
-               "identity": (identity, identity_prime)}
+               "identity": (identity, identity_prime),
+               "softmax": {softmax, softmax_prime}}
     _, fp = ACTIVATIONS[hidden_activation]
     n = X.shape[0]
     z, a = feed_forward(X, layers, hidden_activation, head)
@@ -235,7 +232,7 @@ if __name__ == "__main__":
     y_test = y_test - np.mean(y_test)
     y_test=y_test.reshape(-1,1)
     act="sigmoid"
-    model=NeuralNetRegressor(hidden=(50, 40, 10), activation="sigmoid", epochs=10000, gamma=0.5)
+    model=NeuralNetRegressor(hidden=(50, 40, 4), activation="sigmoid", epochs=10000, gamma=0.5)
     fitted=model.fit(X, y)
     pred=model.predict(X_test)
     print(pred)
