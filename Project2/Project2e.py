@@ -14,7 +14,7 @@ from sklearn.model_selection import (KFold, StratifiedKFold, cross_val_score, cr
 from sklearn.model_selection import train_test_split
 
 
-from Project2b_new import(
+from Project2b import(
     Runge,
     create_layers,
     feed_forward,
@@ -67,7 +67,14 @@ class NeuralNetClassifier(BaseEstimator, ClassifierMixin):
     def predict(self, X):
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
+def accuracy_class(pr, te):
+    points=0
+    for i in range(len(pr)):
+        if pr[i]==te[i]:
+            points+=1
+    return points/len(pr)
 if __name__ == "__main__":
+    """
     digits = datasets.load_digits()
     inputs = digits.data / 16.0                    # 1797 rows, 64 features, scaled to [0, 1]
     labels = digits.target
@@ -76,12 +83,21 @@ if __name__ == "__main__":
     print("inputs", inputs.shape, " labels", labels.shape, " one-hot targets", targets.shape)
     print("first label:", labels[0], " its one-hot row:", targets[0])
     """
+    """
     fig, axes = plt.subplots(1, 10, figsize=(10, 1.4))
     for ax, k in zip(axes, range(10)):
         ax.imshow(digits.images[k], cmap="gray_r"); ax.set_title(labels[k], fontsize=9); ax.axis("off")
     plt.show()
     """
-    print(targets[0])
+    
+    with np.load("mnist.npz") as data:
+        xtr, ytr = data["x_train"], data["y_train"]
+        xte, yte = data["x_test"], data["y_test"] # untouched until the end
+    print(xtr.shape, ytr.shape, xte.shape, yte.shape)
+    xtr = xtr.reshape(len(xtr), -1) / 255.0
+    xte = xte.reshape(len(xte), -1) / 255.0
+    """
+        print(targets[0])
     y_label=np.zeros(targets.shape[0])
     print(y_label)
     for i in range(len(targets)):
@@ -89,20 +105,18 @@ if __name__ == "__main__":
         #print(np.where(targets[i]==1)[0][0])
         y_label[i]=np.where(targets[i]==1)[0][0]
     print(y_label)
-    
+    """
     #print(labels)
-    xtr, xte, ytr, yte = train_test_split(inputs, y_label, test_size=0.3, random_state=50)
-    #print(ytr.shape)
+    #xtr, xte, ytr, yte = train_test_split(inputs, y_label, test_size=0.3, random_state=50)
+    print(ytr.shape)
     #print(ytr)
     #print(xtr.shape)
-    model=NeuralNetClassifier(hidden=(50, 40, 10), activation="relu", epochs=1000, gamma=0.5)
+    model=NeuralNetClassifier(hidden=(50,), activation="sigmoid", epochs=10000, gamma=0.5)
     fitted=model.fit(xtr, ytr)
     pred=model.predict(xte)
     print(pred)
     points=0
-    for i in range(len(pred)):
-        if pred[i]==yte[i]:
-            points+=1
-    acc=points/len(pred)
+    
+    acc=accuracy_class(pred, yte)
     print(acc)
 

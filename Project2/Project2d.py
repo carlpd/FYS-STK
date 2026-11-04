@@ -12,7 +12,7 @@ from sklearn.model_selection import (KFold, StratifiedKFold, cross_val_score, cr
                                      cross_val_predict, GridSearchCV, validation_curve, learning_curve)
 
 
-from Project2b_new import(
+from Project2b import(
     Runge,
     create_layers,
     feed_forward,
@@ -52,7 +52,7 @@ if __name__ == "__main__":
     y_test=y_test.reshape(-1,1)
 
     cv = KFold(n_splits=5, shuffle=True, random_state=2026)
-    net = make_pipeline(StandardScaler(), NeuralNetRegressor(hidden=(50,20, 10), gamma=0.03, activation="sigmoid" epochs=1000))
+    net = make_pipeline(StandardScaler(), NeuralNetRegressor(hidden=(50,20, 10), gamma=0.03, activation="sigmoid", epochs=1000))
     scores = -cross_val_score(net, X, y, cv=cv, scoring="neg_mean_squared_error")
     cv = KFold(n_splits=5, shuffle=True, random_state=2026)
     param_grid = {"neuralnetregressor__gamma": [0.001, 0.003, 0.01, 0.03, 0.1],
