@@ -193,7 +193,7 @@ def predict(X, layers, hidden_activation="sigmoid", head="mse"):
 class NeuralNetRegressor(BaseEstimator, RegressorMixin):
     """Your Project 2 network with the scikit-learn estimator interface."""
 
-    def __init__(self, hidden=(50,), activation="sigmoid", gamma=0.03, lmbd=0.0, epochs=100, batch_size=10, seed=2026):
+    def __init__(self, hidden=(50,), activation="sigmoid", gamma=0.03, lmbd=0.0, epochs=100, batch_size=10, seed=2026, L2=True):
         # store the hyperparameters under the same names; no computation here
         self.hidden = hidden
         self.activation = activation
@@ -202,15 +202,22 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
         self.epochs = epochs
         self.batch_size = batch_size
         self.seed = seed
+        self.L2 = L2
 
     def fit(self, X, y):
         # X has shape (n, 1), y shape (n,): build the layers from self.seed,
         # train with your SGD for self.epochs epochs, store the layers in self.layers_
         sizes = [X.shape[1], *self.hidden, 1]
         layers = create_layers(sizes, self.activation, np.random.default_rng(self.seed))
-        self.layers_, self.history_ = train(X, y.reshape(-1, 1), layers, self.activation, "mse", gamma=self.gamma,
-                                                  epochs=self.epochs, batch_size=self.batch_size, lmbd2=self.lmbd,
-                                                  rng=np.random.default_rng(self.seed))
+        if self.L2:
+            self.layers_, self.history_ = train(X, y.reshape(-1, 1), layers, self.activation, "mse", gamma=self.gamma,
+                                                    epochs=self.epochs, batch_size=self.batch_size, lmbd2=self.lmbd,
+                                                    rng=np.random.default_rng(self.seed))
+        else:
+            self.layers_, self.history_ = train(X, y.reshape(-1, 1), layers, self.activation, "mse", gamma=self.gamma,
+                                                                epochs=self.epochs, batch_size=self.batch_size, lmbd1=self.lmbd,
+                                                                rng=np.random.default_rng(self.seed))
+
         return self
 
     def predict(self, X):
