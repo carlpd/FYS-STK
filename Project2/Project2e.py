@@ -44,7 +44,8 @@ def one_hot(y, n_classes=None):
     return Y
 
 class NeuralNetClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, hidden=(64,), activation="relu", gamma=0.1, lmbd=0.0, epochs=10, batch_size=100, seed=2026):
+    def __init__(self, hidden=(64,), activation="relu", gamma=0.1, lmbd=0.0, epochs=10, batch_size=100, seed=2026,
+                 L2=True, optimizer="gd", penalize_bias=True):
         self.hidden = hidden
         self.activation = activation
         self.gamma = gamma
@@ -52,13 +53,19 @@ class NeuralNetClassifier(BaseEstimator, ClassifierMixin):
         self.epochs = epochs
         self.batch_size = batch_size
         self.seed = seed
+        self.L2 = L2
+        self.optimizer = optimizer
+        self.penalize_bias = penalize_bias
 
     def fit(self, X, y):
         self.classes_ = np.unique(y)
         Y = one_hot(np.searchsorted(self.classes_, y), len(self.classes_))
         layers = create_layers([X.shape[1], *self.hidden, len(self.classes_)], self.activation, np.random.default_rng(self.seed))
+        lmbd2, lmbd1 = (self.lmbd, 0.0) if self.L2 else (0.0, self.lmbd)
         self.layers_, self.history_ = train(X, Y, layers, self.activation, "softmax", gamma=self.gamma, epochs=self.epochs,
-                                            batch_size=self.batch_size, lmbd2=self.lmbd, rng=np.random.default_rng(self.seed))
+                                            batch_size=self.batch_size, lmbd2=lmbd2, lmbd1=lmbd1,
+                                            rng=np.random.default_rng(self.seed), optimizer=self.optimizer,
+                                            penalize_bias=self.penalize_bias)
         return self
 
     def predict_proba(self, X):
@@ -68,11 +75,9 @@ class NeuralNetClassifier(BaseEstimator, ClassifierMixin):
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
 def accuracy_class(pr, te):
-    points=0
-    for i in range(len(pr)):
-        if pr[i]==te[i]:
-            points+=1
-    return points/len(pr)
+    pr, te = np.ravel(pr), np.ravel(te)
+    assert len(pr) == len(te)
+    return np.mean(pr == te)
 if __name__ == "__main__":
     """
     digits = datasets.load_digits()
@@ -108,15 +113,15 @@ if __name__ == "__main__":
     """
     #print(labels)
     #xtr, xte, ytr, yte = train_test_split(inputs, y_label, test_size=0.3, random_state=50)
-    print(ytr.shape)
-    #print(ytr)
-    #print(xtr.shape)
-    model=NeuralNetClassifier(hidden=(50,), activation="sigmoid", epochs=10000, gamma=0.5)
-    fitted=model.fit(xtr, ytr)
+    xfit, xval, yfit, yval = train_test_split(xtr, ytr, test_size=10000, stratify=ytr, random_state=2026)
+
+    baseline = NeuralNetClassifier(hidden=(), epochs=20, gamma=0.5).fit(xfit, yfit)
+    print("logistic regression (no hidden layers), validation accuracy:", accuracy_class(baseline.predict(xval), yval))
+    model=NeuralNetClassifier(hidden=(50,), activation="sigmoid", epochs=20, gamma=0.5)
+    fitted=model.fit(xfit, yfit)
+    print("1 hidden layer (50, sigmoid), validation accuracy:", accuracy_class(model.predict(xval), yval))
+
     pred=model.predict(xte)
-    print(pred)
-    points=0
-    
     acc=accuracy_class(pred, yte)
-    print(acc)
+    print("test accuracy:", acc)
 
