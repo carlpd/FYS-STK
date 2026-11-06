@@ -31,25 +31,13 @@ from Project2b import(
     train,
     accuracy,
     predict,
-    NeuralNetRegressor
+    NeuralNetRegressor,
+    runge_split,
+    MSE_2
 )
 
 if __name__ == "__main__":
-    rng = np.random.default_rng(2026)
-    n = 100
-    x = np.sort(rng.uniform(-1.0, 1.0, n))
-    sigma = 0.1
-    y = Runge(x) + rng.normal(0.0, sigma, n)
-    X = x.reshape(-1, 1)
-    X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-    y = y - np.mean(y)
-    y = y.reshape(-1,1)
-    x_test = np.sort(rng.uniform(-1.0, 1.0, n))
-    y_test = Runge(x_test) + rng.normal(0.0, sigma, n)
-    X_test = x.reshape(100, 1)
-    X_test = (X_test - np.mean(X_test, axis=0)) / np.std(X_test, axis=0)
-    y_test = y_test - np.mean(y_test)
-    y_test=y_test.reshape(-1,1)
+    X, y, X_test, y_test, sc = runge_split()
 
     cv = KFold(n_splits=5, shuffle=True, random_state=2026)
     net = make_pipeline(StandardScaler(), NeuralNetRegressor(hidden=(50,20, 10), gamma=0.03, activation="sigmoid", epochs=1000))
