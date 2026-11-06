@@ -29,35 +29,25 @@ from Project2b import(
     train,
     accuracy,
     predict,
-    NeuralNetRegressor
+    NeuralNetRegressor,
+    runge_split,
+    MSE_2
 )
 
 
 
 if __name__ == "__main__":
-    rng = np.random.default_rng(2026)
-    n = 100
-    x = np.sort(rng.uniform(-1.0, 1.0, n))
-    sigma = 0.1
-    y = Runge(x) + rng.normal(0.0, sigma, n)
-    X = x.reshape(-1, 1)
-    X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-    y = y - np.mean(y)
-    y = y.reshape(-1,1)
-    x_test = np.sort(rng.uniform(-1.0, 1.0, n))
-    y_test = Runge(x_test) + rng.normal(0.0, sigma, n)
-    X_test = x.reshape(100, 1)
-    X_test = (X_test - np.mean(X_test, axis=0)) / np.std(X_test, axis=0)
-    y_test = y_test - np.mean(y_test)
-    y_test=y_test.reshape(-1,1)
+    X, y, X_test, y_test, sc = runge_split()
     ReLU3=NeuralNetRegressor(hidden=(50, 40, 10), activation="relu", epochs=10000, gamma=0.01).fit(X,y)
     LReLU3=NeuralNetRegressor(hidden=(50, 40 ,10), activation="lrelu", epochs=10000, gamma=0.01).fit(X,y)
     sigmoid3=NeuralNetRegressor(hidden=(50, 40, 10), activation="sigmoid", epochs=10000, gamma=0.5).fit(X,y)
     ReLU3_pred=ReLU3.predict(X_test)
     LReLU3_pred=LReLU3.predict(X_test)
     sigmoid3_pred=sigmoid3.predict(X_test)
-          
-    plt.plot(X_test, y_test, label="Test data")
+    for name, p in [("ReLU", ReLU3_pred), ("LReLU", LReLU3_pred), ("sigmoid", sigmoid3_pred)]:
+        print(f"{name:8s} 3 HL: test MSE {MSE_2(p, y_test):.4f}")
+
+    plt.plot(X_test, y_test, "o", label="Test data")
     plt.plot(X_test, ReLU3_pred, label="ReLU, 3 HL")
     plt.plot(X_test, LReLU3_pred, label="LReLU, 3 HL")
     plt.plot(X_test, sigmoid3_pred, label="sigmoid, 3 HL")
