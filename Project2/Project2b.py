@@ -6,23 +6,16 @@ from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.model_selection import (KFold, StratifiedKFold, cross_val_score, cross_validate,
                                      cross_val_predict, GridSearchCV, validation_curve, learning_curve)
-from scipy.special import expit             # numerically stable sigmoid (no overflow warnings)
+from scipy.special import expit
 
-from utils import make_update                # GD, momentum, AdaGrad, RMSprop and Adam from project 1
+from utils import make_update
 
-# The network is pure NumPy (jax.numpy here made every array a JAX array and the training ~10x slower).
 
 def Runge(x):
     return 1.0 / (1.0 + 25.0 * x**2)
 
 
 def layer_activations(hidden_activation, n_hidden):
-    """The activation of every hidden layer as a list.
-
-    hidden_activation is either one name for all hidden layers ("sigmoid") or one name per
-    hidden layer (["relu", "relu", "sigmoid"]).  Names: "sigmoid", "relu", "lrelu", "linear".
-    The output layer's activation is fixed by the cost function (see OUTPUT).
-    """
     if isinstance(hidden_activation, str):
         return [hidden_activation] * n_hidden
     acts = list(hidden_activation)
@@ -35,10 +28,8 @@ def create_layers(sizes, hidden_activation="sigmoid", rng=None):
     """A list of (W, b) pairs, W of shape (inputs, outputs) as in the template.
 
     sizes = [784, 100, 10] gives two layers: 784 -> 100 -> 10.  The weights are
-    drawn with the variance of Eq. (8.74) (He, 2/inputs) for a layer followed by ReLU or
-    Leaky ReLU and 1/inputs otherwise, the biases are set to 0.01 as in the template.
-    hidden_activation: one name or one name per hidden layer (see layer_activations).
-    The output layer is scaled like the last hidden layer.
+    drawn with the variance of Eq. (8.74) (He) for ReLU and 1/inputs otherwise,
+    the biases are set to 0.01 as in the template.
     """
     rng = np.random.default_rng(2026) if rng is None else rng
     n_hidden = len(sizes) - 2
@@ -61,7 +52,6 @@ def feed_forward(X, layers, hidden_activation="sigmoid", head="mse"):
 
     Returns the lists z (pre-activations) and a (activations, a[0] = X): every
     one of them is needed on the way back, so the forward pass stores them.
-    hidden_activation: one name for all hidden layers or one per hidden layer.
     """
     acts = layer_activations(hidden_activation, len(layers) - 1)
     a, z = [X], []
@@ -91,7 +81,6 @@ def LReLU(z):
     return np.where(z > 0, z, alpha * z)
 
 def sigmoid(z):
-    """1/(1+exp(-z)), via scipy's expit so that large |z| (MNIST) gives no overflow."""
     return expit(z)
 
 def softmax(z):
@@ -123,27 +112,18 @@ def identity_prime(z):
     return np.ones_like(z)
 
 def softmax_prime(z):
-    """Jacobian d softmax_i / d z_j = s_i (delta_ij - s_j) of a single vector z.
-
-    Not needed in the backpropagation: softmax + cross entropy gives delta^L = a^L - y directly.
-    """
     s = softmax_vec(z)
     return np.diag(s) - np.outer(s, s)
 
-# (f, f') for every hidden activation.  Softmax is only used as the output head
-# (its derivative is a Jacobian, not an elementwise f'), so it is not in this table.
 ACTIVATIONS = {"sigmoid": (sigmoid, sigmoid_prime),
                "relu": (ReLU, ReLU_prime),
                "lrelu": (LReLU, LReLU_prime),
                "identity": (identity, identity_prime),
                "linear": (identity, identity_prime)}
 
-# Output activation paired with its cost: linear+MSE, sigmoid+binary CE, softmax+CE
 OUTPUT = {"mse": identity, "binary": sigmoid, "softmax": softmax}
 
 def MSE_2(pred, y_te):
-    """Mean squared error. Both arguments are flattened first: a prediction of shape (n,)
-    and targets of shape (n, 1) would otherwise broadcast to an (n, n) matrix."""
     pred, y_te = np.ravel(pred), np.ravel(y_te)
     if pred.shape != y_te.shape:
         raise ValueError(f"MSE_2: {pred.shape} predictions vs {y_te.shape} targets")
@@ -151,10 +131,7 @@ def MSE_2(pred, y_te):
 
 def backpropagation(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2=0.0, lmbd1=0.0,
                     penalize_bias=True):
-    """Eqs. (8.65)-(8.68) for all samples at once; returns a list of (dW, db) with the shapes of (W, b).
-
-    lmbd2, lmbd1: L2 and L1 penalties (Section 8.12) on the weights and, with penalize_bias=True
-    (as in the project text), also on the biases."""
+    """Eqs. (8.65)-(8.68) for all samples at once; returns a list of (dW, db) with the shapes of (W, b)."""
     acts = layer_activations(hidden_activation, len(layers) - 1)
     n = X.shape[0]
     z, a = feed_forward(X, layers, hidden_activation, head)
@@ -173,8 +150,7 @@ def backpropagation(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2
             delta = (delta @ W.T) * fp(z[l - 1])     # Eq. (8.66): pull back through W, modulate by f'
     return grads
 def cost(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2=0.0, lmbd1=0.0, penalize_bias=True):
-    """The cost of Eq. (8.31): data term for the chosen head plus L2 and L1 penalties on the weights
-    (and on the biases when penalize_bias=True)."""
+    """The cost of Eq. (8.31): data term for the chosen head plus L2 and L1 penalties on the weights."""
     out = predict(X, layers, hidden_activation, head)
     n = X.shape[0]
     if head == "mse":                            # Eq. (8.32)
@@ -191,11 +167,8 @@ def cost(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2=0.0, lmbd1
 def train(X, Y, layers, hidden_activation="sigmoid", head="mse", gamma=0.1, epochs=100,
           batch_size=None, lmbd2=0.0, lmbd1=0.0, rng=None, X_test=None, y_test=None, verbose=False,
           optimizer="gd", penalize_bias=True):
-    """Gradient descent, Eq. (8.70), on minibatches (batch_size=None: the whole set = plain GD).
+    """Plain gradient descent, Eq. (8.70), on minibatches (batch_size=None: the whole set).
 
-    optimizer: update rule from project 1 (utils.make_update): "gd" (fixed learning rate gamma),
-               "momentum", "adagrad", "rmsprop" or "adam".  Each weight matrix and bias vector
-               gets its own optimiser state.
     Returns the trained layers and a history with the training cost after
     every epoch and, when a test set is given, the test accuracy.
     """
@@ -246,9 +219,9 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
         self.epochs = epochs
         self.batch_size = batch_size
         self.seed = seed
-        self.L2 = L2                  # True: lmbd is the L2 penalty, False: lmbd is the L1 penalty
-        self.optimizer = optimizer    # "gd", "momentum", "adagrad", "rmsprop" or "adam"
-        self.penalize_bias = penalize_bias  # True: the penalty also acts on the biases
+        self.L2 = L2
+        self.optimizer = optimizer
+        self.penalize_bias = penalize_bias
 
     def fit(self, X, y):
         # X has shape (n, 1), y shape (n,): build the layers from self.seed,
@@ -268,13 +241,6 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
 
 
 def runge_split(n=100, sigma=0.1, seed=2026):
-    """The data set of project 1 (utils.runge_data + the same train/test split), scaled with
-    the TRAINING statistics only: x standardised, y centred.  Both sets are sorted in x so
-    that they can be plotted as lines.
-
-    Returns X, y, X_test, y_test (column vectors) and the Scaler (add sc.y_mean back to
-    predictions to get the original scale).  MSE is unchanged by the centring.
-    """
     from sklearn.model_selection import train_test_split
     from utils import runge_data, Scaler
     x, yy = runge_data(n=n, noise=sigma, seed=seed)
