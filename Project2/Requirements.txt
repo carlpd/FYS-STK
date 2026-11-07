@@ -1,0 +1,10 @@
+We use python with anaconda. Downloading can be found here: https://www.anaconda.com/docs/getting-started/installation
+This includes many functions we use, such as matplotlib.pyplot and numpy.
+
+For jax, you can install using
+
+pip install jax jaxlib
+
+for scikit-leanr use
+
+pip install scikit-learn
