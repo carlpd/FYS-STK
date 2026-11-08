@@ -16,7 +16,7 @@ The report is Project2.pdf in this folder.
 - `Code/Project1bb.py` and `Code/utils.py`: code from project 1 that we reuse (data, scaling, OLS and the optimizers)
 - `Code/Project2c.py` and `Code/Project2d.py`: small test scripts we used before moving things into the notebook, you can ignore these
 - `Code/mnist.npz`: the MNIST data
-- `Code/Plots/`: the plots we use in the report
+- `Plots/`: our results (the plots we use in the report)
 - `Old Files/`: older versions of the code that we don't use anymore
 
 ## Installation
@@ -35,7 +35,7 @@ pip install -r Requirements.txt
 
 ## How to run
 
-Run the notebook from inside the Code folder, since it loads `mnist.npz` and saves the plots to `Plots/`:
+Run the notebook from inside the Code folder, since it loads `mnist.npz` from there and saves the plots to `../Plots/`:
 
 ```
 cd Code
