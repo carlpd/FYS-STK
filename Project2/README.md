@@ -2,8 +2,6 @@
 
 Carl Petter Duedahl, Ole Morten Gården and Ingi Benedikt Jónasson
 
-Welcome to our second project in FYS-STK3155!
-
 In this project we made our own feed forward neural network in NumPy, with backpropagation, sigmoid, ReLU and leaky ReLU, L1 and L2 regularization, and the optimizers from project 1 (GD, SGD, RMSprop and Adam). We used it for regression on the Runge function, where we compare with OLS, Ridge and Lasso from project 1, and for classification of the MNIST handwritten digits, where we compare with logistic regression and Scikit-Learn.
 
 The report is Project2.pdf in this folder.
@@ -54,5 +52,3 @@ If you run the notebook on another computer, the Runge results should come out t
 - **Task c:** sigmoid, ReLU and leaky ReLU for different numbers of layers and nodes, and a check for overfitting. Plots: `nhl_mse`, `c_depth_width`, `c_overfitting`
 - **Task d:** L2 and L1 regularization, and a comparison with Ridge and Lasso from project 1. Plots: `d_gamma_lambda`, `d_arch_lambda`
 - **Task e:** logistic regression as the baseline, the different optimizers, heatmaps of the hyperparameters, the best model on the test set with a confusion matrix, and a comparison with Scikit-Learn. Plots: `e_optimisers`, `e_heatmaps`, `e_confusion_matrix`
-
-Happy evaluating!
