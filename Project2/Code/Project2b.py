@@ -7,6 +7,8 @@ from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.model_selection import (KFold, StratifiedKFold, cross_val_score, cross_validate,
                                      cross_val_predict, GridSearchCV, validation_curve, learning_curve)
 from scipy.special import expit
+from sklearn.model_selection import train_test_split
+from utils import runge_data, Scaler
 
 from utils import make_update
 
@@ -240,11 +242,9 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
         return predict(X, self.layers_, self.activation, "mse")[:, 0]
 
 
-def runge_split(n=100, sigma=0.1, seed=2026):
-    from sklearn.model_selection import train_test_split
-    from utils import runge_data, Scaler
+def runge_split(n=100, sigma=0.1, seed=2026, test_size=0.3):
     x, yy = runge_data(n=n, noise=sigma, seed=seed)
-    x_tr, x_te, y_tr, y_te = train_test_split(x, yy, test_size=0.3, random_state=seed)
+    x_tr, x_te, y_tr, y_te = train_test_split(x, yy, test_size=test_size, random_state=seed)
     i_tr, i_te = np.argsort(x_tr), np.argsort(x_te)
     x_tr, y_tr, x_te, y_te = x_tr[i_tr], y_tr[i_tr], x_te[i_te], y_te[i_te]
     sc = Scaler().fit(x_tr.reshape(-1, 1), y_tr)
