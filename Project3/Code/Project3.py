@@ -241,7 +241,17 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
 """
 New to this project
 """
-hbar=scp.hbar
-print(hbar)
-m=1*scp.physical_constants["electron mass"][0]
-print(m)
+def V(x):
+    return 1/2 * x**2
+def dV_dx(x):
+    return x
+def ddV_dx(x):
+    return 1
+
+
+if __name__ == "__main__":
+    hbar=scp.hbar
+    print(hbar)
+    m=1*scp.physical_constants["electron mass"][0]
+    print(m)
+    X=np.linspace(0,1, 100)
