@@ -9,6 +9,7 @@ from sklearn.model_selection import (KFold, StratifiedKFold, cross_val_score, cr
                                      cross_val_predict, GridSearchCV, validation_curve, learning_curve)
 from scipy.special import expit
 from sklearn.model_selection import train_test_split
+from autograd import grad, elementwise_grad
 
 """
 Function gotten from Project 2
@@ -148,8 +149,8 @@ def backpropagation(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2
             fp = ACTIVATIONS[acts[l - 1]][1]
             delta = (delta @ W.T) * fp(z[l - 1])     # Eq. (8.66): pull back through W, modulate by f'
     return grads
+"""
 def cost(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2=0.0, lmbd1=0.0, penalize_bias=True):
-    """The cost of Eq. (8.31): data term for the chosen head plus L2 and L1 penalties on the weights."""
     out = predict(X, layers, hidden_activation, head)
     n = X.shape[0]
     if head == "mse":                            # Eq. (8.32)
@@ -163,6 +164,12 @@ def cost(X, Y, layers, hidden_activation="sigmoid", head="mse", lmbd2=0.0, lmbd1
     params = [p for W, b in layers for p in ((W, b) if penalize_bias else (W,))]
     reg = sum(lmbd2 * np.sum(p ** 2) + lmbd1 * np.sum(np.abs(p)) for p in params)
     return data + reg
+"""
+def cost(P, terms):
+        total = 0.0
+        for _, w, residual, Xk in terms:
+            total = total + w * np.mean(residual(P, Xk) ** 2)
+        return total
 def train(X, Y, layers, hidden_activation="sigmoid", head="mse", gamma=0.1, epochs=100,
           batch_size=None, lmbd2=0.0, lmbd1=0.0, rng=None, X_test=None, y_test=None, verbose=False,
           optimizer="gd", penalize_bias=True):
@@ -241,13 +248,65 @@ class NeuralNetRegressor(BaseEstimator, RegressorMixin):
 """
 New to this project
 """
+"""
 def V(x):
     return 1/2 * x**2
 def dV_dx(x):
     return x
 def ddV_dx(x):
     return 1
+"""
 
+"""
+def trial_diffusion(P, X):
+    x, t = X[:, 0], X[:, 1]
+    return (1 - t) * np.sin(np.pi * x) + x * (1 - x) * t * predict(P, X, "tanh")
+
+def network_derivs(P, X, activation="tanh", order=2, k=0):
+    f = ACT[activation]
+    fp = elementwise_grad(f) # f'
+    fpp = elementwise_grad(fp) # f''
+    a = X
+    da = np.zeros_like(X) + (np.arange(X.shape[1]) == k) # da0/dxk = e_k
+    d2a = np.zeros_like(X)
+    for l, (W, b) in enumerate(P):
+        z, dz, d2z = a @ W + b, da @ W, d2a @ W
+    if l < len(P) - 1:
+        a, da, d2a = f(z), fp(z) * dz, fpp(z) * dz**2 + fp(z) * d2z
+    else: # linear output
+        a, da, d2a = z, dz, d2z
+    if order == 1:
+        return a[:, 0], da[:, 0]
+    return a[:, 0], da[:, 0], d2a[:, 0]
+
+def d_dxk(fun, k):
+    def wrapped(P, X):
+        def scalarised(xk):
+            Xn = np.concatenate([X[:, :k], xk.reshape(-1, 1), X[:, k+1:]], axis=1)
+            return fun(P, Xn)
+        return elementwise_grad(scalarised)(X[:, k])
+    return wrapped
+"""
+def init_parameters(layer_sizes, activation="tanh", rng=None):
+"""He (8.he) for the ReLU family, Xavier (8.xavier) otherwise."""
+    rng = np.random.default_rng(0) if rng is None else rng
+    P = []
+    for i in range(len(layer_sizes) - 1):
+        nin, nout = layer_sizes[i], layer_sizes[i + 1]
+        s = np.sqrt(2.0 / nin) if activation in ("relu", "leaky_relu", "elu") \
+            else np.sqrt(1.0 / nin)
+        P.append([rng.normal(0, s, (nin, nout)), np.zeros(nout)])
+    return
+def pinn_solve(terms, layer_sizes, activation="tanh", n_iter=2000, gamma=1e-2,rng=None, every=200):
+    P=init_parameters(layer_sizes, activation, rng)
+    """
+    def cost(P):
+        total = 0.0
+        for _, w, residual, Xk in terms:
+        total = total + w * np.mean(residual(P, Xk) ** 2)
+        return total
+    """
+    return
 
 if __name__ == "__main__":
     hbar=scp.hbar
